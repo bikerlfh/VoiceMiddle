@@ -2,7 +2,8 @@
 
 **Status:** Draft for review
 **Date:** 2026-05-11
-**Target platform:** macOS 14.4 (Sonoma) or later. Windows / Linux are explicit
+**Target platform:** macOS 14.6 (Sonoma) or later, aligned with DriverKit 23.6
+for the bundled System Extension. Windows / Linux are explicit
 future goals but out of scope for the MVP.
 
 ---
@@ -107,7 +108,7 @@ in time, and both pipelines process audio independently.
 
 * **API:** Core Audio Process Taps (`CATapDescription`,
   `AudioHardwareCreateProcessTap`, `AudioHardwareCreateAggregateDevice`).
-  Available since macOS 14.4.
+  Available since macOS 14.4; we require 14.6 to match DriverKit 23.6.
 * **Mode:** per-process tap targeting the PID of the selected communication
   app. We use a single tap; if the user switches the target app at runtime,
   the existing tap is destroyed and a new one is created.
@@ -511,7 +512,7 @@ to allow future migrations. The MVP is `schemaVersion = 1`.
 | Prompt | Trigger | Info.plist key |
 |---|---|---|
 | Microphone access | First time `AVAudioEngine` opens the input node. | `NSMicrophoneUsageDescription` |
-| Audio capture (process tap) | First time `AudioHardwareCreateProcessTap` is called. | `NSAudioCaptureUsageDescription` (macOS 14.4+) |
+| Audio capture (process tap) | First time `AudioHardwareCreateProcessTap` is called. | `NSAudioCaptureUsageDescription` (macOS 14.6+) |
 | System Extension install | When the user clicks "Install driver" in onboarding. | Handled by the System Extensions framework. |
 | Accessibility | If the user enables the global hotkey for the first time. | `NSAccessibilityUsageDescription` |
 | Network | Implicit; no prompt. | n/a |

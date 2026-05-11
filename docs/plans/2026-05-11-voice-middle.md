@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Ship a macOS 14.4+ app that translates a two-party voice/video call in
+**Goal:** Ship a macOS 14.6+ app that translates a two-party voice/video call in
 real time, bidirectionally, on top of ElevenLabs Scribe v2 + Flash v2.5, with a
 DriverKit virtual microphone that any communication app can pick up.
 
@@ -917,7 +917,7 @@ Follow the same 5-step structure:
   Local…`, point to the repo root.
 * In the `VoiceMiddle` target → General → Frameworks: link `VMCore`,
   `VMAudio`, `VMScribe`, `VMFlash`, `VMTranslators`, `VMPipeline`.
-* Set deployment target to macOS 14.4.
+* Set deployment target to macOS 14.6.
 
 **Step 2: Write the SwiftUI app entry point**
 

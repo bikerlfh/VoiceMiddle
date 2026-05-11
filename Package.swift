@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "VoiceMiddle",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS("14.6")],
     products: [
         .library(name: "VMCore", targets: ["VMCore"]),
         .library(name: "VMAudio", targets: ["VMAudio"]),

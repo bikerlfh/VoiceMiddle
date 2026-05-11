@@ -13,7 +13,7 @@ just read a live transcript).
 
 ## How it works (in one paragraph)
 
-VoiceMiddle uses **Core Audio Process Taps** (macOS 14.4+) to capture the
+VoiceMiddle uses **Core Audio Process Taps** (macOS 14.6+) to capture the
 output audio of a target communication app, runs it through **ElevenLabs Scribe
 v2 (realtime STT)** → a pluggable translator (**Claude**, **GPT**, or **DeepL**)
 → **ElevenLabs Flash/Turbo v2.5 (streaming TTS)**, and either plays the
@@ -32,7 +32,7 @@ repository are written in English.
 
 ## Requirements
 
-* macOS 14.4 (Sonoma) or later.
+* macOS 14.6 (Sonoma) or later. The bundled driver targets DriverKit 23.6.
 * ElevenLabs API key (for Scribe v2 realtime STT and Flash/Turbo v2.5 TTS).
 * One of: Anthropic API key, OpenAI API key, or DeepL API key, for the
   translation step.

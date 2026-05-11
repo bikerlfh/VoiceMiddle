@@ -1,0 +1,21 @@
+//
+//  VoiceMiddleDriver.iig
+//  VoiceMiddleDriver
+//
+//  Created by LuisMo on 2026-05-11.
+//
+
+#ifndef VoiceMiddleDriver_h
+#define VoiceMiddleDriver_h
+
+#include <Availability.h>
+#include <DriverKit/IOService.iig>
+
+class VoiceMiddleDriver: public IOService
+{
+public:
+    virtual kern_return_t
+    Start(IOService * provider) override;
+};
+
+#endif /* VoiceMiddleDriver_h */

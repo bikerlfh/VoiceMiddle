@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:VoiceMiddleDriver/VoiceMiddleDriver.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:VoiceMiddle/VoiceMiddle.xcodeproj">
    </FileRef>
    <FileRef
