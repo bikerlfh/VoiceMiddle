@@ -12,9 +12,18 @@ let package = Package(
         .library(name: "VMTranslators", targets: ["VMTranslators"]),
         .library(name: "VMPipeline", targets: ["VMPipeline"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-atomics.git", from: "1.2.0"),
+    ],
     targets: [
         .target(name: "VMCore"),
-        .target(name: "VMAudio", dependencies: ["VMCore"]),
+        .target(
+            name: "VMAudio",
+            dependencies: [
+                "VMCore",
+                .product(name: "Atomics", package: "swift-atomics"),
+            ]
+        ),
         .target(name: "VMScribe", dependencies: ["VMCore"]),
         .target(name: "VMFlash", dependencies: ["VMCore"]),
         .target(name: "VMTranslators", dependencies: ["VMCore"]),
