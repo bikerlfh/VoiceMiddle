@@ -1,0 +1,636 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		7CC4B7922FB2A00F009840AC /* VMAudio in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC4B7912FB2A00F009840AC /* VMAudio */; };
+		7CC4B7942FB2A00F009840AC /* VMCore in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC4B7932FB2A00F009840AC /* VMCore */; };
+		7CC4B7962FB2A00F009840AC /* VMFlash in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC4B7952FB2A00F009840AC /* VMFlash */; };
+		7CC4B7982FB2A00F009840AC /* VMPipeline in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC4B7972FB2A00F009840AC /* VMPipeline */; };
+		7CC4B79A2FB2A00F009840AC /* VMScribe in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC4B7992FB2A00F009840AC /* VMScribe */; };
+		7CC4B79C2FB2A00F009840AC /* VMTranslators in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC4B79B2FB2A00F009840AC /* VMTranslators */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7CC4B7742FB29FA1009840AC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7CC4B75E2FB29FA0009840AC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7CC4B7652FB29FA0009840AC;
+			remoteInfo = VoiceMiddle;
+		};
+		7CC4B77E2FB29FA1009840AC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7CC4B75E2FB29FA0009840AC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7CC4B7652FB29FA0009840AC;
+			remoteInfo = VoiceMiddle;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		7CC4B7662FB29FA0009840AC /* VoiceMiddle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoiceMiddle.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7CC4B7732FB29FA1009840AC /* VoiceMiddleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceMiddleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7CC4B77D2FB29FA1009840AC /* VoiceMiddleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceMiddleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		7CC4B7682FB29FA0009840AC /* VoiceMiddle */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = VoiceMiddle;
+			sourceTree = "<group>";
+		};
+		7CC4B7762FB29FA1009840AC /* VoiceMiddleTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = VoiceMiddleTests;
+			sourceTree = "<group>";
+		};
+		7CC4B7802FB29FA1009840AC /* VoiceMiddleUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = VoiceMiddleUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7CC4B7632FB29FA0009840AC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7CC4B7962FB2A00F009840AC /* VMFlash in Frameworks */,
+				7CC4B7942FB2A00F009840AC /* VMCore in Frameworks */,
+				7CC4B79A2FB2A00F009840AC /* VMScribe in Frameworks */,
+				7CC4B7922FB2A00F009840AC /* VMAudio in Frameworks */,
+				7CC4B7982FB2A00F009840AC /* VMPipeline in Frameworks */,
+				7CC4B79C2FB2A00F009840AC /* VMTranslators in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CC4B7702FB29FA1009840AC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CC4B77A2FB29FA1009840AC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7CC4B75D2FB29FA0009840AC = {
+			isa = PBXGroup;
+			children = (
+				7CC4B7682FB29FA0009840AC /* VoiceMiddle */,
+				7CC4B7762FB29FA1009840AC /* VoiceMiddleTests */,
+				7CC4B7802FB29FA1009840AC /* VoiceMiddleUITests */,
+				7CC4B7672FB29FA0009840AC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7CC4B7672FB29FA0009840AC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7CC4B7662FB29FA0009840AC /* VoiceMiddle.app */,
+				7CC4B7732FB29FA1009840AC /* VoiceMiddleTests.xctest */,
+				7CC4B77D2FB29FA1009840AC /* VoiceMiddleUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7CC4B7652FB29FA0009840AC /* VoiceMiddle */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7CC4B7872FB29FA1009840AC /* Build configuration list for PBXNativeTarget "VoiceMiddle" */;
+			buildPhases = (
+				7CC4B7622FB29FA0009840AC /* Sources */,
+				7CC4B7632FB29FA0009840AC /* Frameworks */,
+				7CC4B7642FB29FA0009840AC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7CC4B7682FB29FA0009840AC /* VoiceMiddle */,
+			);
+			name = VoiceMiddle;
+			packageProductDependencies = (
+				7CC4B7912FB2A00F009840AC /* VMAudio */,
+				7CC4B7932FB2A00F009840AC /* VMCore */,
+				7CC4B7952FB2A00F009840AC /* VMFlash */,
+				7CC4B7972FB2A00F009840AC /* VMPipeline */,
+				7CC4B7992FB2A00F009840AC /* VMScribe */,
+				7CC4B79B2FB2A00F009840AC /* VMTranslators */,
+			);
+			productName = VoiceMiddle;
+			productReference = 7CC4B7662FB29FA0009840AC /* VoiceMiddle.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7CC4B7722FB29FA1009840AC /* VoiceMiddleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7CC4B78A2FB29FA1009840AC /* Build configuration list for PBXNativeTarget "VoiceMiddleTests" */;
+			buildPhases = (
+				7CC4B76F2FB29FA1009840AC /* Sources */,
+				7CC4B7702FB29FA1009840AC /* Frameworks */,
+				7CC4B7712FB29FA1009840AC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7CC4B7752FB29FA1009840AC /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7CC4B7762FB29FA1009840AC /* VoiceMiddleTests */,
+			);
+			name = VoiceMiddleTests;
+			packageProductDependencies = (
+			);
+			productName = VoiceMiddleTests;
+			productReference = 7CC4B7732FB29FA1009840AC /* VoiceMiddleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		7CC4B77C2FB29FA1009840AC /* VoiceMiddleUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7CC4B78D2FB29FA1009840AC /* Build configuration list for PBXNativeTarget "VoiceMiddleUITests" */;
+			buildPhases = (
+				7CC4B7792FB29FA1009840AC /* Sources */,
+				7CC4B77A2FB29FA1009840AC /* Frameworks */,
+				7CC4B77B2FB29FA1009840AC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7CC4B77F2FB29FA1009840AC /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7CC4B7802FB29FA1009840AC /* VoiceMiddleUITests */,
+			);
+			name = VoiceMiddleUITests;
+			packageProductDependencies = (
+			);
+			productName = VoiceMiddleUITests;
+			productReference = 7CC4B77D2FB29FA1009840AC /* VoiceMiddleUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7CC4B75E2FB29FA0009840AC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					7CC4B7652FB29FA0009840AC = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					7CC4B7722FB29FA1009840AC = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 7CC4B7652FB29FA0009840AC;
+					};
+					7CC4B77C2FB29FA1009840AC = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 7CC4B7652FB29FA0009840AC;
+					};
+				};
+			};
+			buildConfigurationList = 7CC4B7612FB29FA0009840AC /* Build configuration list for PBXProject "VoiceMiddle" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 7CC4B75D2FB29FA0009840AC;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7CC4B7902FB2A00F009840AC /* XCLocalSwiftPackageReference "../../voice-in-the-middle" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7CC4B7672FB29FA0009840AC /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7CC4B7652FB29FA0009840AC /* VoiceMiddle */,
+				7CC4B7722FB29FA1009840AC /* VoiceMiddleTests */,
+				7CC4B77C2FB29FA1009840AC /* VoiceMiddleUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7CC4B7642FB29FA0009840AC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CC4B7712FB29FA1009840AC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CC4B77B2FB29FA1009840AC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7CC4B7622FB29FA0009840AC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CC4B76F2FB29FA1009840AC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CC4B7792FB29FA1009840AC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7CC4B7752FB29FA1009840AC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7CC4B7652FB29FA0009840AC /* VoiceMiddle */;
+			targetProxy = 7CC4B7742FB29FA1009840AC /* PBXContainerItemProxy */;
+		};
+		7CC4B77F2FB29FA1009840AC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7CC4B7652FB29FA0009840AC /* VoiceMiddle */;
+			targetProxy = 7CC4B77E2FB29FA1009840AC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		7CC4B7852FB29FA1009840AC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		7CC4B7862FB29FA1009840AC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		7CC4B7882FB29FA1009840AC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = VoiceMiddle/VoiceMiddle.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSAudioCaptureUsageDescription = "VoiceMiddle taps the selected app's audio output to translate the other party's voice.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "VoiceMiddle captures your microphone to translate your voice in real time.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.luismo.VoiceMiddle;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		7CC4B7892FB29FA1009840AC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = VoiceMiddle/VoiceMiddle.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSAudioCaptureUsageDescription = "VoiceMiddle taps the selected app's audio output to translate the other party's voice.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "VoiceMiddle captures your microphone to translate your voice in real time.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.luismo.VoiceMiddle;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		7CC4B78B2FB29FA1009840AC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.luismo.VoiceMiddleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoiceMiddle.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VoiceMiddle";
+			};
+			name = Debug;
+		};
+		7CC4B78C2FB29FA1009840AC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.luismo.VoiceMiddleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoiceMiddle.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VoiceMiddle";
+			};
+			name = Release;
+		};
+		7CC4B78E2FB29FA1009840AC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.luismo.VoiceMiddleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = VoiceMiddle;
+			};
+			name = Debug;
+		};
+		7CC4B78F2FB29FA1009840AC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.luismo.VoiceMiddleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = VoiceMiddle;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7CC4B7612FB29FA0009840AC /* Build configuration list for PBXProject "VoiceMiddle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7CC4B7852FB29FA1009840AC /* Debug */,
+				7CC4B7862FB29FA1009840AC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7CC4B7872FB29FA1009840AC /* Build configuration list for PBXNativeTarget "VoiceMiddle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7CC4B7882FB29FA1009840AC /* Debug */,
+				7CC4B7892FB29FA1009840AC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7CC4B78A2FB29FA1009840AC /* Build configuration list for PBXNativeTarget "VoiceMiddleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7CC4B78B2FB29FA1009840AC /* Debug */,
+				7CC4B78C2FB29FA1009840AC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7CC4B78D2FB29FA1009840AC /* Build configuration list for PBXNativeTarget "VoiceMiddleUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7CC4B78E2FB29FA1009840AC /* Debug */,
+				7CC4B78F2FB29FA1009840AC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		7CC4B7902FB2A00F009840AC /* XCLocalSwiftPackageReference "../../voice-in-the-middle" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../voice-in-the-middle";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7CC4B7912FB2A00F009840AC /* VMAudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VMAudio;
+		};
+		7CC4B7932FB2A00F009840AC /* VMCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VMCore;
+		};
+		7CC4B7952FB2A00F009840AC /* VMFlash */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VMFlash;
+		};
+		7CC4B7972FB2A00F009840AC /* VMPipeline */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VMPipeline;
+		};
+		7CC4B7992FB2A00F009840AC /* VMScribe */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VMScribe;
+		};
+		7CC4B79B2FB2A00F009840AC /* VMTranslators */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VMTranslators;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 7CC4B75E2FB29FA0009840AC /* Project object */;
+}
