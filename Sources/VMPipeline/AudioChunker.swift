@@ -24,8 +24,14 @@ public actor AudioChunker {
     private static let emptyBufferPollNanos: UInt64 = 5_000_000  // 5 ms
 
     public nonisolated let utterances: AsyncStream<[Float]>
+    /// Continuous stream of every drained 480-sample frame, regardless of
+    /// VAD state. Streaming-STT consumers (Scribe v2 with `commit_strategy=vad`)
+    /// subscribe here so audio flows to the upstream as soon as it is
+    /// captured rather than waiting for an utterance to complete.
+    public nonisolated let frames: AsyncStream<[Float]>
 
     private let utterancesContinuation: AsyncStream<[Float]>.Continuation
+    private let framesContinuation: AsyncStream<[Float]>.Continuation
     private let input: RingBuffer
     private var vad: VAD
     private var task: Task<Void, Never>?
@@ -37,11 +43,17 @@ public actor AudioChunker {
         self.vad = vad
         self.currentUtterance.reserveCapacity(48_000)  // 1 s headroom
 
-        var continuation: AsyncStream<[Float]>.Continuation!
+        var uttContinuation: AsyncStream<[Float]>.Continuation!
         self.utterances = AsyncStream(bufferingPolicy: .unbounded) {
-            continuation = $0
+            uttContinuation = $0
         }
-        self.utterancesContinuation = continuation
+        self.utterancesContinuation = uttContinuation
+
+        var frmContinuation: AsyncStream<[Float]>.Continuation!
+        self.frames = AsyncStream(
+            bufferingPolicy: .bufferingNewest(64)
+        ) { frmContinuation = $0 }
+        self.framesContinuation = frmContinuation
     }
 
     public func start() {
@@ -57,6 +69,7 @@ public actor AudioChunker {
         task?.cancel()
         task = nil
         utterancesContinuation.finish()
+        framesContinuation.finish()
     }
 
     // MARK: - Internals
@@ -80,6 +93,10 @@ public actor AudioChunker {
                 } catch { break }
                 continue
             }
+            // Publish the raw frame first so streaming STT clients see audio
+            // immediately, regardless of VAD state.
+            framesContinuation.yield(scratch)
+
             let event = scratch.withUnsafeBufferPointer {
                 vad.process(frame: $0)
             }

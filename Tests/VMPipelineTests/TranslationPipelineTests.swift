@@ -1,4 +1,5 @@
 import Testing
+import Atomics
 import Foundation
 @preconcurrency import AVFoundation
 import VMAudio
@@ -237,6 +238,7 @@ final class FakeSTT: STTStreamClient, @unchecked Sendable {
     private let partialsCont: AsyncStream<String>.Continuation
     private let finalsCont: AsyncStream<String>.Continuation
     private let errorsCont: AsyncStream<STTError>.Continuation
+    private let finalEmitted = ManagedAtomic<Bool>(false)
 
     init() {
         var p: AsyncStream<String>.Continuation!
@@ -253,8 +255,22 @@ final class FakeSTT: STTStreamClient, @unchecked Sendable {
     }
 
     func connect() async {}
-    func send(_ pcm: AVAudioPCMBuffer) async {}
+
+    /// Emits a final the first time the pipeline pushes audio, simulating a
+    /// streaming STT that recognizes speech as soon as it arrives.
+    func send(_ pcm: AVAudioPCMBuffer) async {
+        let (exchanged, _) = finalEmitted.compareExchange(
+            expected: false, desired: true, ordering: .acquiringAndReleasing
+        )
+        guard exchanged else { return }
+        finalsCont.yield("hello world")
+    }
+
     func flushUtterance() async {
+        let (exchanged, _) = finalEmitted.compareExchange(
+            expected: false, desired: true, ordering: .acquiringAndReleasing
+        )
+        guard exchanged else { return }
         finalsCont.yield("hello world")
     }
     func close() async {

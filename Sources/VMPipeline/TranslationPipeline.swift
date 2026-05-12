@@ -120,38 +120,40 @@ public actor TranslationPipeline {
 
     // MARK: - Tasks
 
+    /// Streams every 480-sample frame from the chunker into the STT client
+    /// as soon as the frame is captured. Scribe v2 is a streaming STT
+    /// configured with `commit_strategy=vad`, so utterance boundaries are
+    /// detected server-side from the continuous audio flow. We do **not**
+    /// call ``STTStreamClient/flushUtterance()`` — that would only matter
+    /// for a manual-commit configuration.
+    ///
+    /// Note: ``AudioChunker/utterances`` still fires on local VAD-detected
+    /// utterance boundaries; the pipeline ignores it here because the
+    /// authoritative boundary signal comes from Scribe via
+    /// ``STTStreamClient/finals``.
     private func consumeUtterances() async {
-        for await samples in chunker.utterances {
-            if Task.isCancelled { return }
-            await pushSamplesToSTT(samples)
-            await stt.flushUtterance()
-        }
-    }
-
-    private func pushSamplesToSTT(_ samples: [Float]) async {
-        let frameLength = AudioChunker.frameSampleCount
         guard let format = AVAudioFormat(
             standardFormatWithSampleRate: CanonicalAudioFormat.sampleRate,
             channels: CanonicalAudioFormat.channelCount
         ) else { return }
 
-        var offset = 0
-        while offset < samples.count {
-            let count = min(frameLength, samples.count - offset)
-            guard let pcm = AVAudioPCMBuffer(
-                pcmFormat: format,
-                frameCapacity: AVAudioFrameCount(count)
-            ) else { return }
-            pcm.frameLength = AVAudioFrameCount(count)
+        for await samples in chunker.frames {
+            if Task.isCancelled { return }
+            guard
+                let pcm = AVAudioPCMBuffer(
+                    pcmFormat: format,
+                    frameCapacity: AVAudioFrameCount(samples.count)
+                )
+            else { continue }
+            pcm.frameLength = AVAudioFrameCount(samples.count)
             if let ptr = pcm.floatChannelData?[0] {
                 samples.withUnsafeBufferPointer { source in
-                    for i in 0..<count {
-                        ptr[i] = source[offset + i]
+                    for i in 0..<samples.count {
+                        ptr[i] = source[i]
                     }
                 }
             }
             await stt.send(pcm)
-            offset += count
         }
     }
 

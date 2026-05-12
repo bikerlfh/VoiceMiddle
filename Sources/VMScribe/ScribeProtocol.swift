@@ -28,7 +28,7 @@ enum ScribeProtocol {
             URLQueryItem(name: "audio_format", value: "pcm_48000"),
             URLQueryItem(name: "language_code",
                          value: sourceLanguage.primarySubtag),
-            URLQueryItem(name: "commit_strategy", value: "manual"),
+            URLQueryItem(name: "commit_strategy", value: "vad"),
             URLQueryItem(name: "include_timestamps", value: "false"),
         ]
         return components.url!

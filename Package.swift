@@ -43,7 +43,11 @@ let package = Package(
         ),
         .testTarget(
             name: "VMPipelineTests",
-            dependencies: ["VMPipeline", "VMAudio"]
+            dependencies: [
+                "VMPipeline",
+                "VMAudio",
+                .product(name: "Atomics", package: "swift-atomics"),
+            ]
         ),
     ]
 )

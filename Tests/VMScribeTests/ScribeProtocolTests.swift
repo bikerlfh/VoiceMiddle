@@ -23,7 +23,7 @@ struct ScribeProtocolTests {
         #expect(dict["model_id"] == "scribe_v2_realtime")
         #expect(dict["audio_format"] == "pcm_48000")
         #expect(dict["language_code"] == "en")
-        #expect(dict["commit_strategy"] == "manual")
+        #expect(dict["commit_strategy"] == "vad")
         #expect(dict["include_timestamps"] == "false")
     }
 
