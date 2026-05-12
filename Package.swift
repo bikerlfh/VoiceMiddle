@@ -33,7 +33,10 @@ let package = Package(
         .testTarget(name: "VMCoreTests", dependencies: ["VMCore"]),
         .testTarget(name: "VMAudioTests", dependencies: ["VMAudio"]),
         .testTarget(name: "VMScribeTests", dependencies: ["VMScribe"]),
-        .testTarget(name: "VMFlashTests", dependencies: ["VMFlash"]),
+        .testTarget(
+            name: "VMFlashTests",
+            dependencies: ["VMFlash", "VMCore"]
+        ),
         .testTarget(
             name: "VMTranslatorsTests",
             dependencies: ["VMTranslators", "VMCore"]
