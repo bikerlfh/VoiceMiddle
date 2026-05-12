@@ -38,9 +38,22 @@
 		7CC4B77D2FB29FA1009840AC /* VoiceMiddleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceMiddleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7CC4B7A02FB2A100009840AC /* Exceptions for "VoiceMiddle" folder in "VoiceMiddle" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7CC4B7652FB29FA0009840AC /* VoiceMiddle */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7CC4B7682FB29FA0009840AC /* VoiceMiddle */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7CC4B7A02FB2A100009840AC /* Exceptions for "VoiceMiddle" folder in "VoiceMiddle" target */,
+			);
 			path = VoiceMiddle;
 			sourceTree = "<group>";
 		};
@@ -423,11 +436,8 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSAudioCaptureUsageDescription = "VoiceMiddle taps the selected app's audio output to translate the other party's voice.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "VoiceMiddle captures your microphone to translate your voice in real time.";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = VoiceMiddle/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -458,11 +468,8 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSAudioCaptureUsageDescription = "VoiceMiddle taps the selected app's audio output to translate the other party's voice.";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "VoiceMiddle captures your microphone to translate your voice in real time.";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = VoiceMiddle/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
