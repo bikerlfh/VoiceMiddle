@@ -4,12 +4,12 @@ import VMCore
 @testable import VMTranslators
 
 extension VMTranslatorsSuite {
-@Suite("ClaudeTranslator")
-struct ClaudeTranslatorTests {
+@Suite("GPTTranslator")
+struct GPTTranslatorTests {
     @Test("identifier and supportsContext")
     func identifierAndContext() {
-        let translator = ClaudeTranslator(apiKey: "k")
-        #expect(translator.identifier == .claudeHaiku45)
+        let translator = GPTTranslator(apiKey: "k")
+        #expect(translator.identifier == .gpt4oMini)
         #expect(translator.supportsContext == true)
     }
 
@@ -17,25 +17,32 @@ struct ClaudeTranslatorTests {
     func roundTrip() async throws {
         MockURLProtocol.reset()
         defer { MockURLProtocol.reset() }
-        let translator = ClaudeTranslator(
+        let translator = GPTTranslator(
             apiKey: "k", session: makeMockSession()
         )
         MockURLProtocol.handler = { _ in
             (
                 HTTPURLResponse(
-                    url: URL(string: "https://api.anthropic.com/v1/messages")!,
+                    url: URL(
+                        string: "https://api.openai.com/v1/chat/completions")!,
                     statusCode: 200,
                     httpVersion: nil,
                     headerFields: nil
                 )!,
                 Data(#"""
                 {
-                  "id": "msg_1",
-                  "type": "message",
-                  "role": "assistant",
-                  "content": [{"type": "text", "text": "  Hola mundo\n"}],
-                  "model": "claude-haiku-4-5-20251001",
-                  "stop_reason": "end_turn"
+                  "id": "chatcmpl_1",
+                  "object": "chat.completion",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "  Hola mundo\n"
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ]
                 }
                 """#.utf8)
             )
@@ -50,18 +57,21 @@ struct ClaudeTranslatorTests {
         #expect(translated == "Hola mundo")
     }
 
-    @Test("Request body contains required Anthropic fields")
+    @Test("Request body contains required OpenAI fields")
     func requestShape() async throws {
         MockURLProtocol.reset()
         defer { MockURLProtocol.reset() }
-        let translator = ClaudeTranslator(
+        let translator = GPTTranslator(
             apiKey: "secret", session: makeMockSession()
         )
         MockURLProtocol.handler = { _ in
             (HTTPURLResponse(
-                url: URL(string: "https://api.anthropic.com/v1/messages")!,
+                url: URL(
+                    string: "https://api.openai.com/v1/chat/completions")!,
                 statusCode: 200, httpVersion: nil, headerFields: nil
-            )!, Data(#"{"content":[{"type":"text","text":"ok"}]}"#.utf8))
+            )!, Data(#"""
+                {"choices":[{"message":{"role":"assistant","content":"ok"}}]}
+                """#.utf8))
         }
         _ = try await translator.translate(
             "Hi",
@@ -71,12 +81,13 @@ struct ClaudeTranslatorTests {
         )
 
         let captured = try #require(MockURLProtocol.capturedRequests.first)
-        #expect(captured.value(forHTTPHeaderField: "x-api-key") == "secret")
         #expect(
-            captured.value(forHTTPHeaderField: "anthropic-version") == "2023-06-01"
+            captured.value(forHTTPHeaderField: "Authorization")
+                == "Bearer secret"
         )
         #expect(
-            captured.value(forHTTPHeaderField: "content-type") == "application/json"
+            captured.value(forHTTPHeaderField: "Content-Type")
+                == "application/json"
         )
         let body = try #require(
             captured.httpBody ?? captured.httpBodyStream.flatMap(readAll)
@@ -84,31 +95,31 @@ struct ClaudeTranslatorTests {
         let json = try #require(
             try JSONSerialization.jsonObject(with: body) as? [String: Any]
         )
-        #expect((json["model"] as? String) == "claude-haiku-4-5-20251001")
-        #expect((json["max_tokens"] as? Int) == 1024)
+        #expect((json["model"] as? String) == "gpt-4o-mini")
         #expect((json["temperature"] as? Double) == 0)
-        let system = try #require(json["system"] as? [[String: Any]])
-        let firstSystem = try #require(system.first)
-        let cacheControl = try #require(
-            firstSystem["cache_control"] as? [String: Any]
-        )
-        #expect(cacheControl["type"] as? String == "ephemeral")
         let messages = try #require(json["messages"] as? [[String: Any]])
         #expect(!messages.isEmpty)
+        let firstMessage = try #require(messages.first)
+        #expect(firstMessage["role"] as? String == "system")
+        let systemContent = try #require(firstMessage["content"] as? String)
+        #expect(systemContent.contains("interpreter"))
     }
 
-    @Test("Conversation context becomes structured turns in the messages array")
+    @Test("Conversation context becomes alternating messages")
     func contextEmbedding() async throws {
         MockURLProtocol.reset()
         defer { MockURLProtocol.reset() }
-        let translator = ClaudeTranslator(
+        let translator = GPTTranslator(
             apiKey: "k", session: makeMockSession()
         )
         MockURLProtocol.handler = { _ in
             (HTTPURLResponse(
-                url: URL(string: "https://api.anthropic.com/v1/messages")!,
+                url: URL(
+                    string: "https://api.openai.com/v1/chat/completions")!,
                 statusCode: 200, httpVersion: nil, headerFields: nil
-            )!, Data(#"{"content":[{"type":"text","text":"ok"}]}"#.utf8))
+            )!, Data(#"""
+                {"choices":[{"message":{"role":"assistant","content":"ok"}}]}
+                """#.utf8))
         }
 
         let now = Date()
@@ -139,19 +150,44 @@ struct ClaudeTranslatorTests {
         )
         let messages = try #require(json["messages"] as? [[String: Any]])
 
-        // We expect a single user message describing context + the new line.
-        let firstMessage = try #require(messages.first)
-        #expect(firstMessage["role"] as? String == "user")
-        let content = try #require(firstMessage["content"] as? String)
-        #expect(content.contains("Hey, can you hear me?"))
-        #expect(content.contains("¿Me oyes?"))
-        #expect(content.contains("engineering interview"))
-        #expect(content.contains("What did you mean by that?"))
+        // Expected layout:
+        //   [0] system: interpreter prompt + topic hint
+        //   [1] user: turn 1 original
+        //   [2] assistant: turn 1 translated
+        //   [3] user: turn 2 original
+        //   [4] assistant: turn 2 translated
+        //   [5] user: new utterance + translate directive
+        #expect(messages.count == 6)
+
+        let system = try #require(messages.first)
+        #expect(system["role"] as? String == "system")
+        let systemContent = try #require(system["content"] as? String)
+        #expect(systemContent.contains("engineering interview"))
+
+        let m1 = messages[1]
+        #expect(m1["role"] as? String == "user")
+        #expect((m1["content"] as? String) == "Hey, can you hear me?")
+        let m2 = messages[2]
+        #expect(m2["role"] as? String == "assistant")
+        #expect((m2["content"] as? String) == "¿Me oyes?")
+        let m3 = messages[3]
+        #expect(m3["role"] as? String == "user")
+        #expect((m3["content"] as? String) == "Sí, perfectamente.")
+        let m4 = messages[4]
+        #expect(m4["role"] as? String == "assistant")
+        #expect((m4["content"] as? String) == "Yes, perfectly.")
+
+        let last = try #require(messages.last)
+        #expect(last["role"] as? String == "user")
+        let lastContent = try #require(last["content"] as? String)
+        #expect(lastContent.contains("What did you mean by that?"))
+        #expect(lastContent.contains("en"))
+        #expect(lastContent.contains("es"))
     }
 
     @Test("Empty source throws emptySource")
     func emptySource() async throws {
-        let translator = ClaudeTranslator(
+        let translator = GPTTranslator(
             apiKey: "k", session: makeMockSession()
         )
         await #expect(throws: TranslationError.emptySource) {
@@ -164,16 +200,17 @@ struct ClaudeTranslatorTests {
         }
     }
 
-    @Test("HTTP 5xx surfaces as upstream error with statusCode")
+    @Test("HTTP 5xx surfaces as upstream error")
     func upstream5xx() async throws {
         MockURLProtocol.reset()
         defer { MockURLProtocol.reset() }
-        let translator = ClaudeTranslator(
+        let translator = GPTTranslator(
             apiKey: "k", session: makeMockSession()
         )
         MockURLProtocol.handler = { _ in
             (HTTPURLResponse(
-                url: URL(string: "https://api.anthropic.com/v1/messages")!,
+                url: URL(
+                    string: "https://api.openai.com/v1/chat/completions")!,
                 statusCode: 503, httpVersion: nil, headerFields: nil
             )!, Data("service unavailable".utf8))
         }
