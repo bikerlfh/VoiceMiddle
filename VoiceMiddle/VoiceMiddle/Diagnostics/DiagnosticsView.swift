@@ -71,6 +71,44 @@ struct DiagnosticsView: View {
                 .frame(minHeight: 120)
             }
 
+            GroupBox("Crash reports") {
+                VStack(alignment: .leading, spacing: 8) {
+                    if model.crashReports.isEmpty {
+                        Text("No crash reports on disk.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 2) {
+                                ForEach(
+                                    model.crashReports, id: \.self
+                                ) { url in
+                                    Text(url.lastPathComponent)
+                                        .font(
+                                            .system(
+                                                .caption,
+                                                design: .monospaced
+                                            )
+                                        )
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .frame(minHeight: 60, maxHeight: 100)
+                    }
+                    HStack {
+                        Button("Open folder") {
+                            model.openCrashReportFolder()
+                        }
+                        Button("Clear all") {
+                            model.clearCrashReports()
+                        }
+                        .disabled(model.crashReports.isEmpty)
+                    }
+                }
+                .padding(8)
+            }
+
             HStack {
                 Button("Reset metrics") { model.reset() }
                 Spacer()

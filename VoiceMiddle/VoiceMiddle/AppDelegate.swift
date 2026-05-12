@@ -1,4 +1,5 @@
 import AppKit
+import MetricKit
 import VMCore
 import VMPipeline
 
@@ -18,6 +19,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let hudViewModel = HUDViewModel()
     let settings = SettingsStore()
     let metrics = PipelineMetrics()
+    let crashReportStore = CrashReportStore()
+    private var crashReportSubscriber: CrashReportSubscriber?
     lazy var sessionDriver: SessionDriver = SessionDriver(
         settings: settings,
         hudViewModel: hudViewModel,
@@ -30,10 +33,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DiagnosticsWindowController = DiagnosticsWindowController(
             viewModel: DiagnosticsViewModel(
                 metrics: metrics,
-                driver: sessionDriver
+                driver: sessionDriver,
+                crashReportStore: crashReportStore
             )
         )
     private var menuBarController: MenuBarController?
+
+    /// Number of crash reports waiting on disk. The Diagnostics window
+    /// surfaces this via its bound store; this accessor lets other UI (a
+    /// future menu-bar badge, for instance) read the same count without
+    /// owning a reference to the store.
+    var pendingCrashReportCount: Int {
+        crashReportStore.reports.count
+    }
     private lazy var onboardingController: OnboardingWindowController = {
         let viewModel = OnboardingViewModel(
             installer: systemExtensionInstaller,
@@ -56,6 +68,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.diagnosticsWindowController.toggle()
             }
         )
+        let subscriber = CrashReportSubscriber(store: crashReportStore)
+        crashReportSubscriber = subscriber
+        MXMetricManager.shared.add(subscriber)
         if !settings.hasCompletedOnboarding {
             onboardingController.show()
         }
