@@ -8,10 +8,15 @@ import VMPipeline
 final class MenuBarController {
     private let statusItem: NSStatusItem
     private let controller: SessionController
+    private let onToggleHUD: @MainActor () -> Void
     private var observerTask: Task<Void, Never>?
 
-    init(controller: SessionController) {
+    init(
+        controller: SessionController,
+        onToggleHUD: @escaping @MainActor () -> Void
+    ) {
         self.controller = controller
+        self.onToggleHUD = onToggleHUD
         self.statusItem = NSStatusBar.system.statusItem(
             withLength: NSStatusItem.variableLength
         )
@@ -56,6 +61,16 @@ final class MenuBarController {
 
         menu.addItem(.separator())
 
+        let hudItem = NSMenuItem(
+            title: "Show transcript HUD",
+            action: #selector(toggleHUD),
+            keyEquivalent: "h"
+        )
+        hudItem.target = self
+        menu.addItem(hudItem)
+
+        menu.addItem(.separator())
+
         let preferencesItem = NSMenuItem(
             title: "Preferences…",
             action: #selector(openPreferences),
@@ -97,6 +112,10 @@ final class MenuBarController {
                 await controller.stop()
             }
         }
+    }
+
+    @objc private func toggleHUD() {
+        onToggleHUD()
     }
 
     @objc private func openPreferences() {

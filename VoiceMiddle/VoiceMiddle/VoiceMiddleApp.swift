@@ -6,7 +6,7 @@ struct VoiceMiddleApp: App {
 
     var body: some Scene {
         Settings {
-            InboundDemoView()
+            InboundDemoView(hudViewModel: appDelegate.hudViewModel)
         }
     }
 }

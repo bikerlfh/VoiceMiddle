@@ -7,7 +7,17 @@ import VMPipeline
 /// Settings-scene UI for the Task 2.13 end-to-end inbound demo. Pairs
 /// with ``InboundDemoViewModel``.
 struct InboundDemoView: View {
-    @StateObject private var model = InboundDemoViewModel()
+    let hudViewModel: HUDViewModel
+    @StateObject private var model: InboundDemoViewModel
+
+    init(hudViewModel: HUDViewModel) {
+        self.hudViewModel = hudViewModel
+        _model = StateObject(
+            wrappedValue: InboundDemoViewModel(
+                hudViewModel: hudViewModel
+            )
+        )
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {

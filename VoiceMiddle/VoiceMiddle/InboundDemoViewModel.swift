@@ -53,8 +53,12 @@ final class InboundDemoViewModel: ObservableObject {
     private var capture: AppAudioCapture?
     private var outputEngine: OutputEngine?
     private var transcriptTask: Task<Void, Never>?
+    private weak var hudViewModel: HUDViewModel?
 
-    init(environment: [String: String] = ProcessInfo.processInfo.environment) {
+    init(
+        hudViewModel: HUDViewModel? = nil,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) {
         let elKey = environment["ELEVENLABS_API_KEY"]?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let dlKey = environment["DEEPL_API_KEY"]?
@@ -63,6 +67,7 @@ final class InboundDemoViewModel: ObservableObject {
         self.deepLKey = dlKey
         self.elevenLabsKeyAvailable = !elKey.isEmpty
         self.deepLKeyAvailable = !dlKey.isEmpty
+        self.hudViewModel = hudViewModel
         refreshProcesses()
     }
 
@@ -248,6 +253,7 @@ final class InboundDemoViewModel: ObservableObject {
         if transcript.count > 200 {
             transcript.removeFirst(transcript.count - 200)
         }
+        hudViewModel?.accept(event)
     }
 
     /// DeepL Free-tier keys end with `:fx` and use the

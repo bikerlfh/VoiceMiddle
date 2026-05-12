@@ -8,10 +8,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let systemExtensionInstaller = SystemExtensionInstaller(
         driverBundleID: "com.luismo.VoiceMiddleDriver"
     )
+    let hudViewModel = HUDViewModel()
+    private(set) lazy var hudWindowController = HUDWindowController(
+        viewModel: hudViewModel
+    )
     private var menuBarController: MenuBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        menuBarController = MenuBarController(controller: sessionController)
+        menuBarController = MenuBarController(
+            controller: sessionController,
+            onToggleHUD: { [weak self] in
+                self?.hudWindowController.toggle()
+            }
+        )
     }
 }
