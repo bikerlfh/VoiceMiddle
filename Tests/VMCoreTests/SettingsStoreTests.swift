@@ -150,6 +150,26 @@ struct SettingsStoreTests {
         }
     }
 
+    @Test("VAD sensitivity and ducking fade round-trip",
+          arguments: [Direction.inbound, .outbound])
+    func vadAndFadeRoundTrip(direction: Direction) {
+        let defaults = ephemeralDefaults()
+        let a = SettingsStore(defaults: defaults)
+        // Defaults match VAD's default and OutputEngine's 80 ms.
+        #expect(abs(a.vadSensitivity(for: direction) - 0.005) < 0.0001)
+        #expect(a.duckingFadeMs == 80)
+
+        a.setVADSensitivity(0.012, for: direction)
+        a.duckingFadeMs = 120
+
+        let b = SettingsStore(defaults: defaults)
+        #expect(abs(b.vadSensitivity(for: direction) - 0.012) < 0.0001)
+        #expect(b.duckingFadeMs == 120)
+        // The other direction should still have the default.
+        let other: Direction = direction == .inbound ? .outbound : .inbound
+        #expect(abs(b.vadSensitivity(for: other) - 0.005) < 0.0001)
+    }
+
     @Test("Global hotkey persistence")
     func hotkeyRoundTrip() {
         let defaults = ephemeralDefaults()

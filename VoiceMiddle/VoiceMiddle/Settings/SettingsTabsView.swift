@@ -26,7 +26,7 @@ struct SettingsTabsView: View {
                     Label("Translation", systemImage: "text.bubble")
                 }
 
-            AudioTab(hudViewModel: hudViewModel)
+            AudioTab(hudViewModel: hudViewModel, settings: settings)
                 .tabItem { Label("Audio", systemImage: "waveform") }
 
             PrivacyTab(settings: settings)

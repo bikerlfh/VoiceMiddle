@@ -52,6 +52,38 @@ public final class SettingsStore: @unchecked Sendable {
         set { defaults.set(newValue, forKey: Keys.duckingLevelDB) }
     }
 
+    /// Fade duration in milliseconds used when ducking ramps in/out.
+    /// Defaults to 80 ms.
+    public var duckingFadeMs: Int {
+        get {
+            (defaults.object(forKey: Keys.duckingFadeMs) as? Int) ?? 80
+        }
+        set { defaults.set(newValue, forKey: Keys.duckingFadeMs) }
+    }
+
+    // MARK: - VAD sensitivity
+
+    /// Per-direction VAD energy threshold. Defaults to 0.005, matching
+    /// ``VAD``'s default.
+    public func vadSensitivity(for direction: Direction) -> Float {
+        let key = direction == .inbound
+            ? Keys.vadSensitivityInbound
+            : Keys.vadSensitivityOutbound
+        if let value = defaults.object(forKey: key) as? Double {
+            return Float(value)
+        }
+        return 0.005
+    }
+
+    public func setVADSensitivity(
+        _ value: Float, for direction: Direction
+    ) {
+        let key = direction == .inbound
+            ? Keys.vadSensitivityInbound
+            : Keys.vadSensitivityOutbound
+        defaults.set(Double(value), forKey: key)
+    }
+
     // MARK: - Onboarding
 
     /// `true` once the user has dismissed the first-launch onboarding
@@ -237,5 +269,8 @@ public final class SettingsStore: @unchecked Sendable {
         static let claudeModel             = "vm.settings.claudeModel"
         static let openAIModel             = "vm.settings.openAIModel"
         static let saveTranscripts         = "vm.settings.saveTranscripts"
+        static let vadSensitivityInbound   = "vm.settings.vadSensitivityInbound"
+        static let vadSensitivityOutbound  = "vm.settings.vadSensitivityOutbound"
+        static let duckingFadeMs           = "vm.settings.duckingFadeMs"
     }
 }
