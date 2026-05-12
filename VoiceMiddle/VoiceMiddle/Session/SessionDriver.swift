@@ -41,6 +41,13 @@ final class SessionDriver: ObservableObject {
     /// Live snapshot of the outbound output device matched by the configured
     /// name. `nil` when no device matches (e.g. BlackHole isn't installed).
     @Published private(set) var outboundDeviceStatus: OutputDevice?
+    /// EMA RMS level of the most-recently-captured target-app audio, in
+    /// `[0, 1]`. Updated at ~30 Hz while a session is running; 0 otherwise.
+    @Published private(set) var inboundLevel: Float = 0
+    /// EMA RMS level of the most-recently-captured microphone audio, in
+    /// `[0, 1]`. Updated at ~30 Hz while a session is running with outbound
+    /// enabled; 0 otherwise.
+    @Published private(set) var outboundLevel: Float = 0
 
     private static let maxRecentErrors = 20
 
@@ -56,6 +63,9 @@ final class SessionDriver: ObservableObject {
     private var inboundObserver: Task<Void, Never>?
     private var outboundObserver: Task<Void, Never>?
     private var transcriptWriter: TranscriptWriter?
+    private var inboundBuffer: RingBuffer?
+    private var outboundBuffer: RingBuffer?
+    private var levelPollingTask: Task<Void, Never>?
 
     init(
         settings: SettingsStore,
@@ -127,6 +137,7 @@ final class SessionDriver: ObservableObject {
 
             await wiring.inbound.start()
             await wiring.outbound?.start()
+            startLevelPolling()
             state = .running
         } catch {
             await tearDown()
@@ -139,8 +150,24 @@ final class SessionDriver: ObservableObject {
         outboundObserver?.cancel()
         inboundObserver = nil
         outboundObserver = nil
+        levelPollingTask?.cancel()
+        levelPollingTask = nil
         await tearDown()
+        inboundLevel = 0
+        outboundLevel = 0
         state = .idle
+    }
+
+    private func startLevelPolling() {
+        levelPollingTask?.cancel()
+        levelPollingTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                self.inboundLevel = self.inboundBuffer?.currentLevel ?? 0
+                self.outboundLevel = self.outboundBuffer?.currentLevel ?? 0
+                try? await Task.sleep(nanoseconds: 33_000_000)   // ~30 Hz
+            }
+        }
     }
 
     // MARK: - Wiring
@@ -195,6 +222,8 @@ final class SessionDriver: ObservableObject {
         deviceSink = nil
         transcriptWriter?.close()
         transcriptWriter = nil
+        inboundBuffer = nil
+        outboundBuffer = nil
     }
 
     private struct Wiring {
@@ -225,6 +254,7 @@ final class SessionDriver: ObservableObject {
         // 4 s @ 48 kHz mono of buffering between capture and chunker, so a
         // momentarily-stalled consumer doesn't immediately drop audio.
         let inboundBuffer = RingBuffer(capacity: 48_000 * 4)
+        self.inboundBuffer = inboundBuffer
         let capture = AppAudioCapture(
             process: process, buffer: inboundBuffer
         )
@@ -318,6 +348,7 @@ final class SessionDriver: ObservableObject {
         outboundDeviceStatus = device
 
         let micBuffer = RingBuffer(capacity: 48_000 * 4)
+        self.outboundBuffer = micBuffer
         let micCapture = MicrophoneCapture(buffer: micBuffer)
         try micCapture.start()
         self.micCapture = micCapture

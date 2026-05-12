@@ -57,6 +57,7 @@ struct AudioTab: View {
         Form {
             credentialsSection
             targetAppSection
+            levelsSection
             vadSection
             duckingSection
             outboundSection
@@ -65,6 +66,27 @@ struct AudioTab: View {
         }
         .formStyle(.grouped)
         .padding(16)
+    }
+
+    private var levelsSection: some View {
+        Section("Live audio levels") {
+            LevelMeter(
+                label: "Inbound (target app)",
+                level: driver.inboundLevel
+            )
+            LevelMeter(
+                label: "Outbound (microphone)",
+                level: driver.outboundLevel
+            )
+            Text(
+                "Bars only move while a session is running. If the inbound "
+                + "bar stays flat with audio playing in the target app, "
+                + "the Core Audio Process Tap is not capturing — recheck "
+                + "the target app picker and the audio-capture permission."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
     }
 
     // MARK: - Sections

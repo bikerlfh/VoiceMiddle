@@ -20,6 +20,10 @@ public final class RingBuffer: @unchecked Sendable {
     private let mask: Int
     private let head: ManagedAtomic<Int>    // next write index, monotonically increasing
     private let tail: ManagedAtomic<Int>    // next read index, monotonically increasing
+    /// EMA of RMS level over recent writes, in [0, 1]. Stored as the bit
+    /// pattern of a `Float` so we can update atomically without a lock.
+    private let levelBits: ManagedAtomic<UInt32>
+    private static let levelEMAAlpha: Float = 0.3
 
     /// - Parameter capacity: Minimum requested capacity in samples. The
     ///   actual capacity is rounded up to the next power of two and must be
@@ -32,6 +36,7 @@ public final class RingBuffer: @unchecked Sendable {
         self.mask = rounded - 1
         self.head = ManagedAtomic<Int>(0)
         self.tail = ManagedAtomic<Int>(0)
+        self.levelBits = ManagedAtomic<UInt32>(Float(0).bitPattern)
     }
 
     deinit {
@@ -53,10 +58,24 @@ public final class RingBuffer: @unchecked Sendable {
         let tail = self.tail.load(ordering: .acquiring)
         let free = storage.count - (head &- tail)
         let n = Swift.min(count, free)
+        var energy: Float = 0
         for index in 0..<n {
-            storage[(head &+ index) & mask] = source[index]
+            let sample = source[index]
+            storage[(head &+ index) & mask] = sample
+            energy += sample * sample
         }
         self.head.store(head &+ n, ordering: .releasing)
+        if n > 0 {
+            let rms = (energy / Float(n)).squareRoot()
+            let previous = Float(
+                bitPattern: levelBits.load(ordering: .relaxed)
+            )
+            let next = previous * (1 - Self.levelEMAAlpha)
+                + rms * Self.levelEMAAlpha
+            levelBits.store(
+                next.bitPattern, ordering: .relaxed
+            )
+        }
         return n
     }
 
@@ -87,6 +106,13 @@ public final class RingBuffer: @unchecked Sendable {
     /// flow-control decisions.
     public var approximateCount: Int {
         head.load(ordering: .relaxed) &- tail.load(ordering: .relaxed)
+    }
+
+    /// Exponentially-weighted RMS level of recent writes, in `[0, 1]`.
+    /// Updates on every ``write(_:count:)`` call; safe to read from any
+    /// thread. Intended for diagnostic VU meters, not for flow control.
+    public var currentLevel: Float {
+        Float(bitPattern: levelBits.load(ordering: .relaxed))
     }
 }
 
