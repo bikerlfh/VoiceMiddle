@@ -143,6 +143,72 @@ public final class SettingsStore: @unchecked Sendable {
         }
     }
 
+    // MARK: - Languages tab
+
+    /// BCP-47 language code of the audio coming from the other party
+    /// (what the inbound pipeline should transcribe). Defaults to `"en"`.
+    public var sourceLanguageCode: String {
+        get { defaults.string(forKey: Keys.sourceLanguageCode) ?? "en" }
+        set { defaults.set(newValue, forKey: Keys.sourceLanguageCode) }
+    }
+
+    /// BCP-47 language code the user wants translations rendered into
+    /// (and the language the outbound pipeline speaks in). Defaults to
+    /// `"es"`.
+    public var targetLanguageCode: String {
+        get { defaults.string(forKey: Keys.targetLanguageCode) ?? "es" }
+        set { defaults.set(newValue, forKey: Keys.targetLanguageCode) }
+    }
+
+    /// ElevenLabs voice ID used for outbound TTS. Default is Rachel
+    /// (`21m00Tcm4TlvDq8ikWAM`), a public ElevenLabs voice.
+    public var voiceID: String {
+        get {
+            defaults.string(forKey: Keys.voiceID) ?? "21m00Tcm4TlvDq8ikWAM"
+        }
+        set { defaults.set(newValue, forKey: Keys.voiceID) }
+    }
+
+    // MARK: - Translation tab
+
+    /// Identifier of the translation engine the user wants to use.
+    /// Free-form string so we can introduce new engines without touching
+    /// the storage layer. Defaults to `"deepL"`.
+    public var translatorIdentifier: String {
+        get {
+            defaults.string(forKey: Keys.translatorIdentifier)
+                ?? "deepL"
+        }
+        set { defaults.set(newValue, forKey: Keys.translatorIdentifier) }
+    }
+
+    /// Model name to use when the selected translator is Claude.
+    public var claudeModel: String {
+        get {
+            defaults.string(forKey: Keys.claudeModel)
+                ?? "claude-haiku-4-5-20251001"
+        }
+        set { defaults.set(newValue, forKey: Keys.claudeModel) }
+    }
+
+    /// Model name to use when the selected translator is OpenAI/GPT.
+    public var openAIModel: String {
+        get {
+            defaults.string(forKey: Keys.openAIModel) ?? "gpt-4o-mini"
+        }
+        set { defaults.set(newValue, forKey: Keys.openAIModel) }
+    }
+
+    // MARK: - Privacy tab
+
+    /// Whether session transcripts should be persisted to disk under
+    /// `~/Library/Application Support/VoiceMiddle/Transcripts/`. Storage
+    /// wiring lands in a follow-up task; this is the source of truth.
+    public var saveTranscripts: Bool {
+        get { defaults.bool(forKey: Keys.saveTranscripts) }
+        set { defaults.set(newValue, forKey: Keys.saveTranscripts) }
+    }
+
     // MARK: - Keys
 
     private static func paceKey(for direction: Direction) -> String {
@@ -164,5 +230,12 @@ public final class SettingsStore: @unchecked Sendable {
         static let hudOpacity              = "vm.settings.hudOpacity"
         static let globalHotkeyKeyCode     = "vm.settings.globalHotkeyKeyCode"
         static let globalHotkeyModifierFlags = "vm.settings.globalHotkeyModifierFlags"
+        static let sourceLanguageCode      = "vm.settings.sourceLanguageCode"
+        static let targetLanguageCode      = "vm.settings.targetLanguageCode"
+        static let voiceID                 = "vm.settings.voiceID"
+        static let translatorIdentifier    = "vm.settings.translatorIdentifier"
+        static let claudeModel             = "vm.settings.claudeModel"
+        static let openAIModel             = "vm.settings.openAIModel"
+        static let saveTranscripts         = "vm.settings.saveTranscripts"
     }
 }

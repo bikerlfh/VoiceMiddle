@@ -101,6 +101,55 @@ struct SettingsStoreTests {
         #expect(abs(b.hudOpacity - 0.65) < 0.001)
     }
 
+    @Test("New 4.x properties round-trip", arguments: [
+        "sourceLanguageCode", "targetLanguageCode", "voiceID",
+        "translatorIdentifier", "claudeModel", "openAIModel",
+        "saveTranscripts"
+    ])
+    func newPropertiesRoundTrip(name: String) {
+        let defaults = ephemeralDefaults()
+        let a = SettingsStore(defaults: defaults)
+        switch name {
+        case "sourceLanguageCode":
+            a.sourceLanguageCode = "fr"
+        case "targetLanguageCode":
+            a.targetLanguageCode = "de"
+        case "voiceID":
+            a.voiceID = "voice-x"
+        case "translatorIdentifier":
+            a.translatorIdentifier = "claudeHaiku45"
+        case "claudeModel":
+            a.claudeModel = "claude-test-model"
+        case "openAIModel":
+            a.openAIModel = "gpt-test"
+        case "saveTranscripts":
+            a.saveTranscripts = true
+        default:
+            Issue.record("unknown property name \(name)")
+            return
+        }
+
+        let b = SettingsStore(defaults: defaults)
+        switch name {
+        case "sourceLanguageCode":
+            #expect(b.sourceLanguageCode == "fr")
+        case "targetLanguageCode":
+            #expect(b.targetLanguageCode == "de")
+        case "voiceID":
+            #expect(b.voiceID == "voice-x")
+        case "translatorIdentifier":
+            #expect(b.translatorIdentifier == "claudeHaiku45")
+        case "claudeModel":
+            #expect(b.claudeModel == "claude-test-model")
+        case "openAIModel":
+            #expect(b.openAIModel == "gpt-test")
+        case "saveTranscripts":
+            #expect(b.saveTranscripts == true)
+        default:
+            break
+        }
+    }
+
     @Test("Global hotkey persistence")
     func hotkeyRoundTrip() {
         let defaults = ephemeralDefaults()

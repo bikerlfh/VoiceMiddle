@@ -18,10 +18,10 @@ struct SettingsTabsView: View {
             GeneralTab(settings: settings)
                 .tabItem { Label("General", systemImage: "gearshape") }
 
-            LanguagesTab()
+            LanguagesTab(settings: settings)
                 .tabItem { Label("Languages", systemImage: "globe") }
 
-            TranslationTab()
+            TranslationTab(settings: settings)
                 .tabItem {
                     Label("Translation", systemImage: "text.bubble")
                 }
@@ -29,7 +29,7 @@ struct SettingsTabsView: View {
             AudioTab(hudViewModel: hudViewModel)
                 .tabItem { Label("Audio", systemImage: "waveform") }
 
-            PrivacyTab()
+            PrivacyTab(settings: settings)
                 .tabItem { Label("Privacy", systemImage: "lock") }
         }
         .frame(minWidth: 720, minHeight: 480)
