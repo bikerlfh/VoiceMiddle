@@ -37,8 +37,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 crashReportStore: crashReportStore
             )
         )
-    private var menuBarController: MenuBarController?
-
     /// Number of crash reports waiting on disk. The Diagnostics window
     /// surfaces this via its bound store; this accessor lets other UI (a
     /// future menu-bar badge, for instance) read the same count without
@@ -59,15 +57,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        menuBarController = MenuBarController(
-            controller: sessionController,
-            onToggleHUD: { [weak self] in
-                self?.hudWindowController.toggle()
-            },
-            onToggleDiagnostics: { [weak self] in
-                self?.diagnosticsWindowController.toggle()
-            }
-        )
         let subscriber = CrashReportSubscriber(store: crashReportStore)
         crashReportSubscriber = subscriber
         MXMetricManager.shared.add(subscriber)
