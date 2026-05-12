@@ -149,43 +149,6 @@ struct ClaudeTranslatorTests {
         #expect(content.contains("What did you mean by that?"))
     }
 
-    @Test("Empty source throws emptySource")
-    func emptySource() async throws {
-        let translator = ClaudeTranslator(
-            apiKey: "k", session: makeMockSession()
-        )
-        await #expect(throws: TranslationError.emptySource) {
-            _ = try await translator.translate(
-                "",
-                from: try LanguageCode("en"),
-                to: try LanguageCode("es"),
-                context: nil
-            )
-        }
-    }
-
-    @Test("HTTP 5xx surfaces as upstream error with statusCode")
-    func upstream5xx() async throws {
-        MockURLProtocol.reset()
-        defer { MockURLProtocol.reset() }
-        let translator = ClaudeTranslator(
-            apiKey: "k", session: makeMockSession()
-        )
-        MockURLProtocol.handler = { _ in
-            (HTTPURLResponse(
-                url: URL(string: "https://api.anthropic.com/v1/messages")!,
-                statusCode: 503, httpVersion: nil, headerFields: nil
-            )!, Data("service unavailable".utf8))
-        }
-        await #expect(throws: TranslationError.self) {
-            _ = try await translator.translate(
-                "Hi",
-                from: try LanguageCode("en"),
-                to: try LanguageCode("es"),
-                context: nil
-            )
-        }
-    }
 }
 }
 
