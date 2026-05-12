@@ -6,7 +6,7 @@ struct VoiceMiddleApp: App {
 
     var body: some Scene {
         Settings {
-            EmptyView()
+            DriverInstallView(installer: appDelegate.systemExtensionInstaller)
         }
     }
 }
