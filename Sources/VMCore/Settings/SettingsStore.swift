@@ -52,6 +52,30 @@ public final class SettingsStore: @unchecked Sendable {
         set { defaults.set(newValue, forKey: Keys.duckingLevelDB) }
     }
 
+    // MARK: - Onboarding
+
+    /// `true` once the user has dismissed the first-launch onboarding
+    /// wizard. The wizard is only shown on first launch (or after the
+    /// defaults domain is reset).
+    public var hasCompletedOnboarding: Bool {
+        get { defaults.bool(forKey: Keys.hasCompletedOnboarding) }
+        set { defaults.set(newValue, forKey: Keys.hasCompletedOnboarding) }
+    }
+
+    /// Bundle identifier of the audio process the user picked in the
+    /// onboarding wizard as their default capture target. `nil` if the
+    /// user skipped that step.
+    public var selectedTargetBundleID: String? {
+        get { defaults.string(forKey: Keys.selectedTargetBundleID) }
+        set {
+            if let newValue {
+                defaults.set(newValue, forKey: Keys.selectedTargetBundleID)
+            } else {
+                defaults.removeObject(forKey: Keys.selectedTargetBundleID)
+            }
+        }
+    }
+
     // MARK: - Keys
 
     private static func paceKey(for direction: Direction) -> String {
@@ -62,10 +86,12 @@ public final class SettingsStore: @unchecked Sendable {
     }
 
     private enum Keys {
-        static let paceInbound     = "vm.settings.paceInbound"
-        static let paceOutbound    = "vm.settings.paceOutbound"
-        static let readOnlyInbound = "vm.settings.readOnlyInbound"
-        static let duckingMode     = "vm.settings.duckingMode"
-        static let duckingLevelDB  = "vm.settings.duckingLevelDB"
+        static let paceInbound             = "vm.settings.paceInbound"
+        static let paceOutbound            = "vm.settings.paceOutbound"
+        static let readOnlyInbound         = "vm.settings.readOnlyInbound"
+        static let duckingMode             = "vm.settings.duckingMode"
+        static let duckingLevelDB          = "vm.settings.duckingLevelDB"
+        static let hasCompletedOnboarding  = "vm.settings.hasCompletedOnboarding"
+        static let selectedTargetBundleID  = "vm.settings.selectedTargetBundleID"
     }
 }

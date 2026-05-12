@@ -94,7 +94,15 @@ final class InboundDemoViewModel: ObservableObject {
             selectedProcess = nil
         }
         if selectedProcess == nil {
-            selectedProcess = filtered.first
+            // Prefer the bundle ID the user picked during onboarding;
+            // fall back to the first process so the demo still works
+            // when the onboarded target isn't currently running.
+            if let savedBundleID = settings.selectedTargetBundleID,
+               let match = filtered.first(where: { $0.bundleID == savedBundleID }) {
+                selectedProcess = match
+            } else {
+                selectedProcess = filtered.first
+            }
         }
     }
 

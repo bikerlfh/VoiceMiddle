@@ -57,4 +57,27 @@ struct SettingsStoreTests {
         #expect(store.paceMode(for: .inbound) == .turnBased)
         #expect(store.duckingMode == .duckToLevel)
     }
+
+    @Test("hasCompletedOnboarding round-trips")
+    func onboardingFlag() {
+        let defaults = ephemeralDefaults()
+        let a = SettingsStore(defaults: defaults)
+        #expect(a.hasCompletedOnboarding == false)
+        a.hasCompletedOnboarding = true
+        let b = SettingsStore(defaults: defaults)
+        #expect(b.hasCompletedOnboarding == true)
+    }
+
+    @Test("selectedTargetBundleID round-trips and clears on nil")
+    func targetBundleID() {
+        let defaults = ephemeralDefaults()
+        let a = SettingsStore(defaults: defaults)
+        #expect(a.selectedTargetBundleID == nil)
+        a.selectedTargetBundleID = "com.example.app"
+        let b = SettingsStore(defaults: defaults)
+        #expect(b.selectedTargetBundleID == "com.example.app")
+        b.selectedTargetBundleID = nil
+        let c = SettingsStore(defaults: defaults)
+        #expect(c.selectedTargetBundleID == nil)
+    }
 }
