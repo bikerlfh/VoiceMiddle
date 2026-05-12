@@ -20,9 +20,10 @@ struct ScribeV2StreamClientTests {
 
         // Queue server frames the read loop will consume.
         await transport.queueIncoming([
-            .text(#"{"type":"partial","text":"hello"}"#),
-            .text(#"{"type":"partial","text":"hello wor"}"#),
-            .text(#"{"type":"final","text":"hello world"}"#),
+            .text(#"{"message_type":"session_started","session_id":"x"}"#),
+            .text(#"{"message_type":"partial_transcript","text":"hello"}"#),
+            .text(#"{"message_type":"partial_transcript","text":"hello wor"}"#),
+            .text(#"{"message_type":"committed_transcript","text":"hello world"}"#),
         ])
 
         let partialsStream = client.partials
@@ -49,8 +50,10 @@ struct ScribeV2StreamClientTests {
         #expect(observedPartials == ["hello", "hello wor"])
         #expect(lastFinal == "hello world")
 
+        // No start frame is sent on connect; the docs replace it with query
+        // parameters on the URL.
         let sent = await transport.sentText
-        #expect(sent.first?.contains("\"type\":\"start\"") ?? false)
+        #expect(sent.isEmpty)
         await client.close()
     }
 
@@ -65,7 +68,7 @@ struct ScribeV2StreamClientTests {
         )
         await client.connect()
         await transport.queueIncoming([
-            .text(#"{"type":"error","message":"invalid auth"}"#)
+            .text(#"{"message_type":"auth_error","error":"invalid key"}"#)
         ])
 
         let errorsStream = client.errors
@@ -74,7 +77,7 @@ struct ScribeV2StreamClientTests {
             return nil
         }
         let observed = await errorsTask.value
-        #expect(observed == .server(message: "invalid auth"))
+        #expect(observed == .server(message: "invalid key"))
         await client.close()
     }
 }

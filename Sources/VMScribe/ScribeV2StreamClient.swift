@@ -8,11 +8,17 @@ import VMCore
 /// fake. Production code constructs the client with a default
 /// ``URLSessionWebSocketTransport``.
 ///
+/// Wire framing is delegated to ``ScribeProtocol``: connection parameters
+/// (model, sample rate, language, commit strategy) are carried as query
+/// items on the URL; audio chunks travel as JSON text frames carrying
+/// base64-encoded Int16 little-endian PCM. Authentication is the
+/// `xi-api-key` request header.
+///
 /// Reconnect with exponential backoff is intentionally deferred to the
-/// pipeline orchestrator (Task 2.10): `connect()` is idempotent and callable
-/// after a transport failure, but this actor does not loop on its own.
+/// pipeline orchestrator: `connect()` is idempotent and callable after a
+/// transport failure, but this actor does not loop on its own.
 public actor ScribeV2StreamClient: STTStreamClient {
-    private let url: URL
+    private let baseURL: URL
     private let apiKey: String
     private let sourceLanguage: LanguageCode
     private let transport: any WebSocketTransport
@@ -29,12 +35,14 @@ public actor ScribeV2StreamClient: STTStreamClient {
     public nonisolated let errors: AsyncStream<STTError>
 
     public init(
-        url: URL,
+        url: URL = URL(
+            string: "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
+        )!,
         apiKey: String,
         sourceLanguage: LanguageCode,
         transport: any WebSocketTransport = URLSessionWebSocketTransport()
     ) {
-        self.url = url
+        self.baseURL = url
         self.apiKey = apiKey
         self.sourceLanguage = sourceLanguage
         self.transport = transport
@@ -53,20 +61,15 @@ public actor ScribeV2StreamClient: STTStreamClient {
 
     public func connect() async {
         guard !isConnected else { return }
+        let endpoint = ScribeProtocol.makeURL(
+            baseURL: baseURL,
+            sourceLanguage: sourceLanguage
+        )
         do {
-            try await transport.connect(url: url, headers: [
-                "Authorization": "Bearer \(apiKey)",
-                "xi-api-key": apiKey,
-            ])
-            // Send `start` as a text frame; some servers reject JSON on the
-            // binary channel.
-            let startData = ScribeProtocol.encodeStart(
-                sampleRate: Int(CanonicalAudioFormat.sampleRate),
-                language: sourceLanguage
+            try await transport.connect(
+                url: endpoint,
+                headers: ["xi-api-key": apiKey]
             )
-            if let startText = String(data: startData, encoding: .utf8) {
-                try await transport.sendText(startText)
-            }
             isConnected = true
             startReader()
         } catch {
@@ -92,6 +95,7 @@ public actor ScribeV2StreamClient: STTStreamClient {
                 errorsContinuation.yield(
                     .transport(message: error.localizedDescription)
                 )
+                isConnected = false
                 break
             }
         }
@@ -100,7 +104,7 @@ public actor ScribeV2StreamClient: STTStreamClient {
     private func handleFrame(_ frame: WebSocketFrame) {
         switch frame {
         case .binary:
-            return    // Scribe v2 currently does not push binary frames.
+            return    // Scribe v2 only emits JSON text frames.
         case .text(let s):
             guard let data = s.data(using: .utf8),
                   let inbound = ScribeProtocol.decode(data) else {
@@ -108,9 +112,13 @@ public actor ScribeV2StreamClient: STTStreamClient {
                 return
             }
             switch inbound {
-            case .partial(let text): partialsContinuation.yield(text)
-            case .final(let text):   finalsContinuation.yield(text)
-            case .error(let message):
+            case .sessionStarted:
+                return
+            case .partial(let text):
+                partialsContinuation.yield(text)
+            case .final(let text):
+                finalsContinuation.yield(text)
+            case .error(_, let message):
                 errorsContinuation.yield(.server(message: message))
             }
         }
@@ -120,9 +128,14 @@ public actor ScribeV2StreamClient: STTStreamClient {
         guard isConnected,
               let channelData = pcm.floatChannelData?[0] else { return }
         let count = Int(pcm.frameLength)
-        let data = ScribeProtocol.encodePCM(channelData, count: count)
+        let data = ScribeProtocol.encodeAudioChunk(
+            channelData, count: count,
+            sampleRate: Int(CanonicalAudioFormat.sampleRate),
+            commit: false
+        )
+        guard let s = String(data: data, encoding: .utf8) else { return }
         do {
-            try await transport.send(data)
+            try await transport.sendText(s)
         } catch {
             errorsContinuation.yield(
                 .transport(message: error.localizedDescription)
@@ -132,12 +145,12 @@ public actor ScribeV2StreamClient: STTStreamClient {
 
     public func flushUtterance() async {
         guard isConnected else { return }
+        let data = ScribeProtocol.encodeCommitOnly(
+            sampleRate: Int(CanonicalAudioFormat.sampleRate)
+        )
+        guard let s = String(data: data, encoding: .utf8) else { return }
         do {
-            let data = ScribeProtocol.encodeEndOfUtterance()
-            // Send as text frame so it's distinguishable from raw PCM.
-            if let s = String(data: data, encoding: .utf8) {
-                try await transport.sendText(s)
-            }
+            try await transport.sendText(s)
         } catch {
             errorsContinuation.yield(
                 .transport(message: error.localizedDescription)

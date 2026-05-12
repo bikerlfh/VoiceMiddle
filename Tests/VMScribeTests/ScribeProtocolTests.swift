@@ -5,84 +5,109 @@ import VMCore
 
 @Suite("ScribeProtocol")
 struct ScribeProtocolTests {
-    @Test("Start frame encodes sample rate, encoding, and language")
-    func encodeStart() throws {
-        let frame = ScribeProtocol.encodeStart(
-            sampleRate: 48_000,
-            language: try LanguageCode("en")
+    @Test("URL builder appends required query params")
+    func makeURL() throws {
+        let url = ScribeProtocol.makeURL(
+            baseURL: URL(string:
+                "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
+            )!,
+            sourceLanguage: try LanguageCode("en-US")
         )
-        let json = try #require(
-            try JSONSerialization.jsonObject(with: frame) as? [String: Any]
+        let components = try #require(
+            URLComponents(url: url, resolvingAgainstBaseURL: false)
         )
-        #expect(json["type"] as? String == "start")
-        #expect(json["sample_rate"] as? Int == 48_000)
-        #expect(json["encoding"] as? String == "pcm_f32")
-        #expect(json["language"] as? String == "en")
+        let pairs = (components.queryItems ?? []).map {
+            ($0.name, $0.value ?? "")
+        }
+        let dict = Dictionary(uniqueKeysWithValues: pairs)
+        #expect(dict["model_id"] == "scribe_v2_realtime")
+        #expect(dict["audio_format"] == "pcm_48000")
+        #expect(dict["language_code"] == "en")
+        #expect(dict["commit_strategy"] == "manual")
+        #expect(dict["include_timestamps"] == "false")
     }
 
-    @Test("End-of-utterance frame is the documented sentinel")
-    func encodeEnd() throws {
-        let frame = ScribeProtocol.encodeEndOfUtterance()
-        let json = try #require(
-            try JSONSerialization.jsonObject(with: frame) as? [String: Any]
-        )
-        #expect(json["type"] as? String == "end_of_utterance")
-    }
-
-    @Test("PCM frame encoder copies Float32 samples as little-endian bytes")
-    func encodePCM() {
-        let samples: [Float] = [0, 0.25, -0.5, 1.0]
+    @Test("Audio chunk encodes input_audio_chunk with base64 PCM")
+    func encodeAudioChunk() throws {
+        let samples: [Float] = [0, 0.5, -0.5, 1.0]
         let data = samples.withUnsafeBufferPointer {
-            ScribeProtocol.encodePCM($0.baseAddress!, count: $0.count)
+            ScribeProtocol.encodeAudioChunk(
+                $0.baseAddress!, count: $0.count,
+                sampleRate: 48_000, commit: false
+            )
         }
-        #expect(data.count == samples.count * MemoryLayout<Float>.size)
-        let roundTripped = data.withUnsafeBytes { raw -> [Float] in
-            Array(raw.bindMemory(to: Float.self))
+        let json = try #require(
+            try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        )
+        #expect(json["message_type"] as? String == "input_audio_chunk")
+        #expect(json["sample_rate"] as? Int == 48_000)
+        #expect(json["commit"] as? Bool == false)
+        let b64 = try #require(json["audio_base_64"] as? String)
+        let bytes = try #require(Data(base64Encoded: b64))
+        #expect(bytes.count == samples.count * 2)
+        let int16s = bytes.withUnsafeBytes { raw in
+            Array(raw.bindMemory(to: Int16.self))
         }
-        #expect(roundTripped == samples)
+        // 0.0  → 0
+        // 0.5  → 16383 ish
+        // -0.5 → -16383 ish
+        // 1.0  → Int16.max
+        #expect(int16s[0] == 0)
+        #expect(int16s[1] > 16_000 && int16s[1] < 17_000)
+        #expect(int16s[2] < -16_000 && int16s[2] > -17_000)
+        #expect(int16s[3] == Int16.max)
     }
 
-    @Test("Decode dispatches to partial, final, and error variants")
+    @Test("Commit-only chunk has empty base64 audio and commit=true")
+    func encodeCommitOnly() throws {
+        let data = ScribeProtocol.encodeCommitOnly(sampleRate: 48_000)
+        let json = try #require(
+            try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        )
+        #expect(json["audio_base_64"] as? String == "")
+        #expect(json["commit"] as? Bool == true)
+    }
+
+    @Test("Decode dispatches partial, final, and error variants")
     func decodeVariants() throws {
         let partial = try #require(
             ScribeProtocol.decode(
-                Data(#"{"type":"partial","text":"hello"}"#.utf8)
+                Data(#"{"message_type":"partial_transcript","text":"hi"}"#.utf8)
             )
         )
         if case .partial(let text) = partial {
-            #expect(text == "hello")
-        } else {
-            Issue.record("Expected partial")
-        }
+            #expect(text == "hi")
+        } else { Issue.record("Expected partial") }
 
         let final = try #require(
             ScribeProtocol.decode(
-                Data(#"{"type":"final","text":"hello world"}"#.utf8)
+                Data(#"{"message_type":"committed_transcript","text":"done"}"#.utf8)
             )
         )
         if case .final(let text) = final {
-            #expect(text == "hello world")
-        } else {
-            Issue.record("Expected final")
-        }
+            #expect(text == "done")
+        } else { Issue.record("Expected final") }
 
-        let error = try #require(
+        let err = try #require(
             ScribeProtocol.decode(
-                Data(#"{"type":"error","message":"boom"}"#.utf8)
+                Data(#"{"message_type":"auth_error","error":"bad key"}"#.utf8)
             )
         )
-        if case .error(let message) = error {
-            #expect(message == "boom")
-        } else {
-            Issue.record("Expected error")
-        }
+        if case .error(let kind, let message) = err {
+            #expect(kind == "auth_error")
+            #expect(message == "bad key")
+        } else { Issue.record("Expected error") }
     }
 
-    @Test("Unknown frame types decode to nil")
-    func decodeUnknown() {
-        let unknown = ScribeProtocol.decode(
-            Data(#"{"type":"keep_alive"}"#.utf8)
+    @Test("Decode handles session_started")
+    func decodeSessionStarted() throws {
+        let started = try #require(
+            ScribeProtocol.decode(
+                Data(#"{"message_type":"session_started","session_id":"abc"}"#.utf8)
+            )
         )
-        #expect(unknown == nil)
+        if case .sessionStarted(let id) = started {
+            #expect(id == "abc")
+        } else { Issue.record("Expected session_started") }
     }
 }
