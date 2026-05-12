@@ -26,6 +26,7 @@ struct InboundDemoView: View {
             targetAppPicker
             languagePickers
             voiceField
+            readOnlyToggle
             controlRow
             if let error = model.lastError {
                 Text(error)
@@ -141,6 +142,18 @@ struct InboundDemoView: View {
             TextField("voice id", text: $model.voiceID)
                 .textFieldStyle(.roundedBorder)
         }
+    }
+
+    private var readOnlyToggle: some View {
+        Toggle(
+            "Read-only (skip TTS toward me)",
+            isOn: $model.readOnlyInbound
+        )
+        .help(
+            "When enabled, the inbound pipeline only shows the live "
+            + "transcript without synthesizing voice in your headphones. "
+            + "Takes effect at next Start."
+        )
     }
 
     private var controlRow: some View {

@@ -22,6 +22,10 @@ import VMTranslators
 /// The pipeline does NOT own its dependencies. Callers wire them and pass
 /// them in; the pipeline owns the connecting tasks and the broadcast
 /// ``transcript`` stream.
+///
+/// When ``tts`` is `nil` (read-only mode), the pipeline still emits
+/// ``TranscriptEvent`` values but skips audio synthesis — useful for the
+/// inbound side when the user prefers to read the translation.
 public actor TranslationPipeline {
     public nonisolated let transcript: AsyncStream<TranscriptEvent>
     private let transcriptContinuation:
@@ -33,7 +37,7 @@ public actor TranslationPipeline {
     private let voice: VoiceID
     private let stt: any STTStreamClient
     private let translator: any Translator
-    private let tts: any TTSStreamClient
+    private let tts: (any TTSStreamClient)?
     private let chunker: AudioChunker
     private let aggregator: TranscriptAggregator
     private let context: ConversationContextActor
@@ -51,7 +55,7 @@ public actor TranslationPipeline {
         voice: VoiceID,
         stt: any STTStreamClient,
         translator: any Translator,
-        tts: any TTSStreamClient,
+        tts: (any TTSStreamClient)?,
         chunker: AudioChunker,
         aggregator: TranscriptAggregator,
         context: ConversationContextActor,
@@ -210,9 +214,11 @@ public actor TranslationPipeline {
                     translated: translated
                 )
             )
-            let sink = audioSink
-            try await tts.synthesize(translated, voice: voice) { data in
-                Task { await sink.receive(data) }
+            if let tts {
+                let sink = audioSink
+                try await tts.synthesize(translated, voice: voice) { data in
+                    Task { await sink.receive(data) }
+                }
             }
         } catch {
             transcriptContinuation.yield(

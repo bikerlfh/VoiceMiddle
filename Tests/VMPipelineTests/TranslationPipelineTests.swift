@@ -141,6 +141,60 @@ struct TranslationPipelineTests {
         #expect(turn.translated == "<hello world>")
     }
 
+    @Test("Read-only mode (nil tts) emits transcript final but no audio chunks")
+    func readOnlySkipsTTS() async throws {
+        let buffer = RingBuffer(capacity: Self.bufferCapacity)
+        let chunker = AudioChunker(input: buffer, vad: VAD())
+        let aggregator = TranscriptAggregator(mode: .turnBased)
+        let stt = FakeSTT()
+        let translator = FakeTranslator()
+        let sink = RecordingSink()
+        let context = ConversationContextActor()
+        let source = try LanguageCode("en")
+        let target = try LanguageCode("es")
+        let pipeline = TranslationPipeline(
+            direction: .inbound,
+            source: source,
+            target: target,
+            voice: VoiceID("voice-1"),
+            stt: stt,
+            translator: translator,
+            tts: nil,
+            chunker: chunker,
+            aggregator: aggregator,
+            context: context,
+            audioSink: sink
+        )
+
+        writeSpeech(into: buffer, frameCount: 20 * Self.frameCount)
+        writeSilence(into: buffer, frameCount: 100 * Self.frameCount)
+
+        await pipeline.start()
+
+        let collector = Task { () async -> TranscriptEvent? in
+            for await event in pipeline.transcript {
+                if case .final = event { return event }
+            }
+            return nil
+        }
+        let event = await withTimeout(seconds: 5) {
+            await collector.value
+        }
+        await pipeline.stop()
+
+        let final = try #require(event ?? nil)
+        if case let .final(direction, original, translated) = final {
+            #expect(direction == .inbound)
+            #expect(original == "hello world")
+            #expect(translated == "<hello world>")
+        } else {
+            Issue.record("expected final event, got \(final)")
+        }
+
+        let chunks = await sink.chunks
+        #expect(chunks.isEmpty)
+    }
+
     @Test("Stop terminates the transcript stream")
     func pipelineStopCleansUpDependencies() async throws {
         let h = try makeHarness()

@@ -28,6 +28,11 @@ final class InboundDemoViewModel: ObservableObject {
     @Published var sourceLanguage: String = "en"
     @Published var targetLanguage: String = "es"
     @Published var voiceID: String = "21m00Tcm4TlvDq8ikWAM"
+    @Published var readOnlyInbound: Bool {
+        didSet {
+            settings.readOnlyInbound = readOnlyInbound
+        }
+    }
 
     // MARK: - Status
 
@@ -46,6 +51,7 @@ final class InboundDemoViewModel: ObservableObject {
 
     private let elevenLabsKey: String
     private let deepLKey: String
+    private let settings: SettingsStore
 
     // MARK: - Pipeline state
 
@@ -57,7 +63,8 @@ final class InboundDemoViewModel: ObservableObject {
 
     init(
         hudViewModel: HUDViewModel? = nil,
-        environment: [String: String] = ProcessInfo.processInfo.environment
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        settings: SettingsStore = SettingsStore()
     ) {
         let elKey = environment["ELEVENLABS_API_KEY"]?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -68,6 +75,8 @@ final class InboundDemoViewModel: ObservableObject {
         self.elevenLabsKeyAvailable = !elKey.isEmpty
         self.deepLKeyAvailable = !dlKey.isEmpty
         self.hudViewModel = hudViewModel
+        self.settings = settings
+        self.readOnlyInbound = settings.readOnlyInbound
         refreshProcesses()
     }
 
@@ -181,7 +190,9 @@ final class InboundDemoViewModel: ObservableObject {
         let translator = DeepLTranslator(
             apiKey: deepLKey, endpoint: endpoint
         )
-        let tts = FlashV2StreamClient(apiKey: elevenLabsKey)
+        let flash = FlashV2StreamClient(apiKey: elevenLabsKey)
+        let ttsForPipeline: (any TTSStreamClient)? =
+            readOnlyInbound ? nil : flash
         let aggregator = TranscriptAggregator(mode: .turnBased)
         let context = ConversationContextActor()
 
@@ -192,7 +203,7 @@ final class InboundDemoViewModel: ObservableObject {
             voice: voice,
             stt: stt,
             translator: translator,
-            tts: tts,
+            tts: ttsForPipeline,
             chunker: chunker,
             aggregator: aggregator,
             context: context,
