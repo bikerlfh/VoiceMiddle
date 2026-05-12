@@ -9,17 +9,22 @@ import VMPipeline
 import VMScribe
 import VMTranslators
 
-/// Owns a live inbound translation pipeline driven entirely from
-/// ``SettingsStore``. The driver is `@MainActor` so its published state can
-/// back SwiftUI views without bridging hops.
+/// Owns the live translation pipelines (inbound and, optionally, outbound)
+/// driven entirely from ``SettingsStore``. The driver is `@MainActor` so its
+/// published state can back SwiftUI views without bridging hops.
 ///
 /// Responsibilities:
 /// - Enumerate available audio processes (filtered to those with a bundle
 ///   ID) and let callers drive the picker.
 /// - Validate that all required environment-variable API keys are present
 ///   for the configured translator before allowing a Start.
-/// - Build the audio capture + STT + translator + (optional) TTS chain and
-///   drain the pipeline's transcript stream into ``transcript``, the HUD,
+/// - Build the inbound chain (Core Audio Process Tap → STT → translator →
+///   TTS → ``OutputEngine``).
+/// - When `settings.outboundEnabled` is `true` and the configured Core Audio
+///   output device is found, build the outbound chain (microphone capture →
+///   STT in the user's language → translator → TTS → ``DeviceOutputSink``
+///   targeting the virtual device, e.g. `BlackHole 2ch`).
+/// - Drain both pipelines' transcript streams into ``transcript``, the HUD,
 ///   and the optional ``TranscriptWriter``.
 @MainActor
 final class SessionDriver: ObservableObject {
@@ -33,16 +38,23 @@ final class SessionDriver: ObservableObject {
     @Published private(set) var transcript: [TranscriptEvent] = []
     @Published private(set) var recentErrors: [TranscriptEvent] = []
     @Published var availableProcesses: [AudioProcess] = []
+    /// Live snapshot of the outbound output device matched by the configured
+    /// name. `nil` when no device matches (e.g. BlackHole isn't installed).
+    @Published private(set) var outboundDeviceStatus: OutputDevice?
 
     private static let maxRecentErrors = 20
 
     private let settings: SettingsStore
     private let hudViewModel: HUDViewModel?
     private let metrics: PipelineMetrics?
-    private var pipeline: TranslationPipeline?
+    private var inboundPipeline: TranslationPipeline?
+    private var outboundPipeline: TranslationPipeline?
     private var capture: AppAudioCapture?
+    private var micCapture: MicrophoneCapture?
     private var outputEngine: OutputEngine?
-    private var observer: Task<Void, Never>?
+    private var deviceSink: DeviceOutputSink?
+    private var inboundObserver: Task<Void, Never>?
+    private var outboundObserver: Task<Void, Never>?
     private var transcriptWriter: TranscriptWriter?
 
     init(
@@ -54,6 +66,7 @@ final class SessionDriver: ObservableObject {
         self.hudViewModel = hudViewModel
         self.metrics = metrics
         refreshProcesses()
+        refreshOutboundDevice()
     }
 
     // MARK: - Process discovery
@@ -65,6 +78,14 @@ final class SessionDriver: ObservableObject {
                 $0.name.localizedCaseInsensitiveCompare($1.name)
                     == .orderedAscending
             }
+    }
+
+    /// Re-runs Core Audio device enumeration and updates
+    /// ``outboundDeviceStatus``.
+    func refreshOutboundDevice() {
+        outboundDeviceStatus = OutputDevice.firstMatching(
+            name: settings.outboundDeviceName
+        )
     }
 
     // MARK: - Preconditions
@@ -95,29 +116,17 @@ final class SessionDriver: ObservableObject {
         guard state == .idle else { return }
         transcript.removeAll(keepingCapacity: true)
         do {
-            let pipeline = try await bringUp()
-            self.pipeline = pipeline
-            let stream = pipeline.transcript
-            observer = Task { [weak self] in
-                for await event in stream {
-                    guard let self else { return }
-                    self.transcript.append(event)
-                    self.hudViewModel?.accept(event)
-                    self.transcriptWriter?.append(event)
-                    if case .error = event {
-                        self.recentErrors.append(event)
-                        if self.recentErrors.count
-                            > Self.maxRecentErrors
-                        {
-                            self.recentErrors.removeFirst(
-                                self.recentErrors.count
-                                    - Self.maxRecentErrors
-                            )
-                        }
-                    }
-                }
+            let wiring = try await bringUp()
+            self.inboundPipeline = wiring.inbound
+            self.outboundPipeline = wiring.outbound
+
+            inboundObserver = observe(pipeline: wiring.inbound)
+            if let outbound = wiring.outbound {
+                outboundObserver = observe(pipeline: outbound)
             }
-            await pipeline.start()
+
+            await wiring.inbound.start()
+            await wiring.outbound?.start()
             state = .running
         } catch {
             await tearDown()
@@ -126,32 +135,74 @@ final class SessionDriver: ObservableObject {
     }
 
     func stop() async {
-        observer?.cancel()
-        observer = nil
+        inboundObserver?.cancel()
+        outboundObserver?.cancel()
+        inboundObserver = nil
+        outboundObserver = nil
         await tearDown()
         state = .idle
     }
 
     // MARK: - Wiring
 
-    private func tearDown() async {
-        if let pipeline {
-            await pipeline.stop()
+    private func observe(
+        pipeline: TranslationPipeline
+    ) -> Task<Void, Never> {
+        let stream = pipeline.transcript
+        return Task { [weak self] in
+            for await event in stream {
+                guard let self else { return }
+                self.transcript.append(event)
+                self.hudViewModel?.accept(event)
+                self.transcriptWriter?.append(event)
+                if case .error = event {
+                    self.recentErrors.append(event)
+                    if self.recentErrors.count > Self.maxRecentErrors {
+                        self.recentErrors.removeFirst(
+                            self.recentErrors.count
+                                - Self.maxRecentErrors
+                        )
+                    }
+                }
+            }
         }
-        pipeline = nil
+    }
+
+    private func tearDown() async {
+        if let inboundPipeline {
+            await inboundPipeline.stop()
+        }
+        inboundPipeline = nil
+        if let outboundPipeline {
+            await outboundPipeline.stop()
+        }
+        outboundPipeline = nil
         if let capture {
             await capture.stop()
         }
         capture = nil
+        if let micCapture {
+            micCapture.stop()
+        }
+        micCapture = nil
         if let outputEngine {
             await outputEngine.stop()
         }
         outputEngine = nil
+        if let deviceSink {
+            await deviceSink.stop()
+        }
+        deviceSink = nil
         transcriptWriter?.close()
         transcriptWriter = nil
     }
 
-    private func bringUp() async throws -> TranslationPipeline {
+    private struct Wiring {
+        let inbound: TranslationPipeline
+        let outbound: TranslationPipeline?
+    }
+
+    private func bringUp() async throws -> Wiring {
         let env = ProcessInfo.processInfo.environment
         let source = try LanguageCode(settings.sourceLanguageCode)
         let target = try LanguageCode(settings.targetLanguageCode)
@@ -173,19 +224,21 @@ final class SessionDriver: ObservableObject {
 
         // 4 s @ 48 kHz mono of buffering between capture and chunker, so a
         // momentarily-stalled consumer doesn't immediately drop audio.
-        let ringBuffer = RingBuffer(capacity: 48_000 * 4)
+        let inboundBuffer = RingBuffer(capacity: 48_000 * 4)
         let capture = AppAudioCapture(
-            process: process, buffer: ringBuffer
+            process: process, buffer: inboundBuffer
         )
         try await capture.start()
         self.capture = capture
 
         let inboundSensitivity = settings.vadSensitivity(for: .inbound)
-        let vad = VAD(energyThreshold: inboundSensitivity)
-        let chunker = AudioChunker(input: ringBuffer, vad: vad)
+        let inboundVAD = VAD(energyThreshold: inboundSensitivity)
+        let inboundChunker = AudioChunker(
+            input: inboundBuffer, vad: inboundVAD
+        )
 
         let elevenLabsKey = env["ELEVENLABS_API_KEY"] ?? ""
-        let scribe = ScribeV2StreamClient(
+        let inboundSTT = ScribeV2StreamClient(
             url: URL(string:
                 "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
             )!,
@@ -193,35 +246,13 @@ final class SessionDriver: ObservableObject {
             sourceLanguage: source
         )
 
-        let translator: any Translator
-        switch settings.translatorIdentifier {
-        case "claudeHaiku45":
-            translator = ClaudeTranslator(
-                apiKey: env["ANTHROPIC_API_KEY"] ?? "",
-                model: settings.claudeModel
-            )
-        case "gpt4oMini":
-            translator = GPTTranslator(
-                apiKey: env["OPENAI_API_KEY"] ?? "",
-                model: settings.openAIModel
-            )
-        default:
-            let deepLKey = env["DEEPL_API_KEY"] ?? ""
-            let endpoint: URL = deepLKey.hasSuffix(":fx")
-                ? URL(string:
-                    "https://api-free.deepl.com/v2/translate")!
-                : URL(string:
-                    "https://api.deepl.com/v2/translate")!
-            translator = DeepLTranslator(
-                apiKey: deepLKey, endpoint: endpoint
-            )
-        }
+        let translator = makeTranslator(env: env)
 
-        let tts: (any TTSStreamClient)? = settings.readOnlyInbound
+        let inboundTTS: (any TTSStreamClient)? = settings.readOnlyInbound
             ? nil
             : FlashV2StreamClient(apiKey: elevenLabsKey)
 
-        let aggregator = TranscriptAggregator(
+        let inboundAggregator = TranscriptAggregator(
             mode: settings.paceMode(for: .inbound)
         )
         let context = ConversationContextActor()
@@ -240,19 +271,124 @@ final class SessionDriver: ObservableObject {
             transcriptWriter = writer
         }
 
-        return TranslationPipeline(
+        let inbound = TranslationPipeline(
             direction: .inbound,
             source: source,
             target: target,
             voice: voice,
-            stt: scribe,
+            stt: inboundSTT,
             translator: translator,
-            tts: tts,
-            chunker: chunker,
-            aggregator: aggregator,
+            tts: inboundTTS,
+            chunker: inboundChunker,
+            aggregator: inboundAggregator,
             context: context,
             audioSink: outputEngine,
             metrics: metrics
         )
+
+        let outbound = try await buildOutbound(
+            env: env,
+            elevenLabsKey: elevenLabsKey,
+            translator: translator,
+            context: context,
+            voice: voice,
+            source: source,
+            target: target
+        )
+
+        return Wiring(inbound: inbound, outbound: outbound)
+    }
+
+    private func buildOutbound(
+        env: [String: String],
+        elevenLabsKey: String,
+        translator: any Translator,
+        context: ConversationContextActor,
+        voice: VoiceID,
+        source: LanguageCode,
+        target: LanguageCode
+    ) async throws -> TranslationPipeline? {
+        guard settings.outboundEnabled else { return nil }
+        guard let device = OutputDevice.firstMatching(
+            name: settings.outboundDeviceName
+        ) else {
+            outboundDeviceStatus = nil
+            return nil
+        }
+        outboundDeviceStatus = device
+
+        let micBuffer = RingBuffer(capacity: 48_000 * 4)
+        let micCapture = MicrophoneCapture(buffer: micBuffer)
+        try micCapture.start()
+        self.micCapture = micCapture
+
+        let outboundVAD = VAD(
+            energyThreshold: settings.vadSensitivity(for: .outbound)
+        )
+        let outboundChunker = AudioChunker(
+            input: micBuffer, vad: outboundVAD
+        )
+
+        // For outbound, the source language is the user's language (= the
+        // inbound's target) and the target language is the remote party's
+        // language (= the inbound's source). The translator carries the user
+        // voice across so the other party hears their language.
+        let outboundSTT = ScribeV2StreamClient(
+            url: URL(string:
+                "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
+            )!,
+            apiKey: elevenLabsKey,
+            sourceLanguage: target
+        )
+        let outboundTTS: any TTSStreamClient = FlashV2StreamClient(
+            apiKey: elevenLabsKey
+        )
+        let outboundAggregator = TranscriptAggregator(
+            mode: settings.paceMode(for: .outbound)
+        )
+
+        let sink = DeviceOutputSink()
+        try await sink.start(deviceID: device.id)
+        self.deviceSink = sink
+
+        return TranslationPipeline(
+            direction: .outbound,
+            source: target,
+            target: source,
+            voice: voice,
+            stt: outboundSTT,
+            translator: translator,
+            tts: outboundTTS,
+            chunker: outboundChunker,
+            aggregator: outboundAggregator,
+            context: context,
+            audioSink: sink,
+            metrics: metrics
+        )
+    }
+
+    private func makeTranslator(env: [String: String]) -> any Translator {
+        switch settings.translatorIdentifier {
+        case "claudeHaiku45":
+            return ClaudeTranslator(
+                apiKey: env["ANTHROPIC_API_KEY"] ?? "",
+                model: settings.claudeModel
+            )
+        case "gpt4oMini":
+            return GPTTranslator(
+                apiKey: env["OPENAI_API_KEY"] ?? "",
+                model: settings.openAIModel
+            )
+        default:
+            let deepLKey = env["DEEPL_API_KEY"] ?? ""
+            let endpoint: URL = deepLKey.hasSuffix(":fx")
+                ? URL(string:
+                    "https://api-free.deepl.com/v2/translate")!
+                : URL(string:
+                    "https://api.deepl.com/v2/translate")!
+            return DeepLTranslator(
+                apiKey: deepLKey, endpoint: endpoint
+            )
+        }
     }
 }

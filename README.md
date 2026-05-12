@@ -83,6 +83,27 @@ first launch):
 | Accessibility (optional) | Global hotkey to toggle a session. |
 | Network | Reach ElevenLabs and the translator API. |
 
+## Outbound translation (you → other party)
+
+VoiceMiddle's outbound side (translating your voice so the other party hears
+their language) routes audio through a virtual microphone. Two options:
+
+1. **BlackHole (recommended for now):** install once via Homebrew.
+
+   ```
+   brew install --cask blackhole-2ch
+   ```
+
+   Approve the System Extension prompt in System Settings → Privacy &
+   Security. In VoiceMiddle Settings → Audio, enable "Translate my voice to
+   the other party" and leave the device name as `BlackHole 2ch`. In your
+   communication app (Teams/Meet/Slack), select `BlackHole 2ch` as the
+   microphone input.
+
+2. **VoiceMiddleDriver (planned):** a bundled DriverKit System Extension. Not
+   yet usable because it requires Apple-approved DriverKit entitlements. Once
+   approved, the device appears as `VoiceMiddle Mic` system-wide.
+
 ## License and credits
 
 To be defined.

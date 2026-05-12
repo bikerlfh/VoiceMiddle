@@ -231,6 +231,27 @@ public final class SettingsStore: @unchecked Sendable {
         set { defaults.set(newValue, forKey: Keys.openAIModel) }
     }
 
+    // MARK: - Outbound
+
+    /// Whether the outbound (you → other party) pipeline should run alongside
+    /// the inbound one. When enabled, translated audio is written into the
+    /// Core Audio device matched by ``outboundDeviceName``.
+    public var outboundEnabled: Bool {
+        get { defaults.bool(forKey: Keys.outboundEnabled) }
+        set { defaults.set(newValue, forKey: Keys.outboundEnabled) }
+    }
+
+    /// Substring match (case-insensitive) used to locate the outbound output
+    /// device. Defaults to `"BlackHole 2ch"`, the open-source virtual audio
+    /// device installed via `brew install --cask blackhole-2ch`.
+    public var outboundDeviceName: String {
+        get {
+            defaults.string(forKey: Keys.outboundDeviceName)
+                ?? "BlackHole 2ch"
+        }
+        set { defaults.set(newValue, forKey: Keys.outboundDeviceName) }
+    }
+
     // MARK: - Privacy tab
 
     /// Whether session transcripts should be persisted to disk under
@@ -272,5 +293,7 @@ public final class SettingsStore: @unchecked Sendable {
         static let vadSensitivityInbound   = "vm.settings.vadSensitivityInbound"
         static let vadSensitivityOutbound  = "vm.settings.vadSensitivityOutbound"
         static let duckingFadeMs           = "vm.settings.duckingFadeMs"
+        static let outboundEnabled         = "vm.settings.outboundEnabled"
+        static let outboundDeviceName      = "vm.settings.outboundDeviceName"
     }
 }

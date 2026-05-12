@@ -20,6 +20,8 @@ struct AudioTab: View {
     @State private var duckingLevelDB: Double
     @State private var duckingFadeMs: Int
     @State private var selectedBundleID: String?
+    @State private var outboundEnabled: Bool
+    @State private var outboundDeviceName: String
 
     private let settings: SettingsStore
 
@@ -43,6 +45,12 @@ struct AudioTab: View {
         _selectedBundleID = State(
             initialValue: settings.selectedTargetBundleID
         )
+        _outboundEnabled = State(
+            initialValue: settings.outboundEnabled
+        )
+        _outboundDeviceName = State(
+            initialValue: settings.outboundDeviceName
+        )
     }
 
     var body: some View {
@@ -50,6 +58,7 @@ struct AudioTab: View {
             targetAppSection
             vadSection
             duckingSection
+            outboundSection
             sessionSection
             transcriptSection
         }
@@ -132,6 +141,50 @@ struct AudioTab: View {
                     settings.duckingFadeMs = new
                 }
             }
+        }
+    }
+
+    private var outboundSection: some View {
+        Section("Outbound (you \u{2192} other)") {
+            Toggle(
+                "Translate my voice to the other party",
+                isOn: $outboundEnabled
+            )
+            .onChange(of: outboundEnabled) { _, new in
+                settings.outboundEnabled = new
+                driver.refreshOutboundDevice()
+            }
+            HStack {
+                Text("Output device:")
+                TextField("Device name", text: $outboundDeviceName)
+                    .textFieldStyle(.roundedBorder)
+                    .onChange(of: outboundDeviceName) { _, new in
+                        settings.outboundDeviceName = new
+                        driver.refreshOutboundDevice()
+                    }
+            }
+            HStack {
+                Text("Status:")
+                if let device = driver.outboundDeviceStatus {
+                    Text("\(device.name) found")
+                        .foregroundStyle(.green)
+                } else {
+                    Text("Device '\(outboundDeviceName)' not found")
+                        .foregroundStyle(.orange)
+                }
+                Button("Refresh") {
+                    driver.refreshOutboundDevice()
+                }
+            }
+            Text(
+                "Install BlackHole via Homebrew: "
+                + "`brew install --cask blackhole-2ch`. "
+                + "Then your communication app must select "
+                + "`BlackHole 2ch` (or the device name above) as its "
+                + "microphone input."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
     }
 

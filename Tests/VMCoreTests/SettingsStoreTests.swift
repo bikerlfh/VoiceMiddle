@@ -170,6 +170,21 @@ struct SettingsStoreTests {
         #expect(abs(b.vadSensitivity(for: other) - 0.005) < 0.0001)
     }
 
+    @Test("Outbound enabled and device name round-trip")
+    func outboundRoundTrip() {
+        let defaults = ephemeralDefaults()
+        let a = SettingsStore(defaults: defaults)
+        #expect(a.outboundEnabled == false)
+        #expect(a.outboundDeviceName == "BlackHole 2ch")
+
+        a.outboundEnabled = true
+        a.outboundDeviceName = "VoiceMiddle Mic"
+
+        let b = SettingsStore(defaults: defaults)
+        #expect(b.outboundEnabled == true)
+        #expect(b.outboundDeviceName == "VoiceMiddle Mic")
+    }
+
     @Test("Global hotkey persistence")
     func hotkeyRoundTrip() {
         let defaults = ephemeralDefaults()
