@@ -43,6 +43,7 @@ public actor TranslationPipeline {
     private let context: ConversationContextActor
     private let audioSink: any AudioSink
     private let topicHint: String?
+    private let metrics: PipelineMetrics?
 
     private var utteranceTask: Task<Void, Never>?
     private var transcriptTask: Task<Void, Never>?
@@ -60,7 +61,8 @@ public actor TranslationPipeline {
         aggregator: TranscriptAggregator,
         context: ConversationContextActor,
         audioSink: any AudioSink,
-        topicHint: String? = nil
+        topicHint: String? = nil,
+        metrics: PipelineMetrics? = nil
     ) {
         self.direction = direction
         self.source = source
@@ -74,6 +76,7 @@ public actor TranslationPipeline {
         self.context = context
         self.audioSink = audioSink
         self.topicHint = topicHint
+        self.metrics = metrics
 
         var continuation: AsyncStream<TranscriptEvent>.Continuation!
         self.transcript = AsyncStream(bufferingPolicy: .unbounded) {
@@ -176,6 +179,9 @@ public actor TranslationPipeline {
 
     private func consumeErrors() async {
         for await error in stt.errors {
+            if case .transport = error {
+                await metrics?.recordSTTReconnect()
+            }
             transcriptContinuation.yield(
                 .error(
                     direction: direction,
@@ -192,13 +198,24 @@ public actor TranslationPipeline {
     }
 
     private func translateAndSpeak(_ text: String) async {
+        let startedAt = Date()
+        let translatorStart = Date()
         do {
             let ctx: ConversationContext? = translator.supportsContext
                 ? await context.snapshot(topicHint: topicHint)
                 : nil
-            let translated = try await translator.translate(
-                text, from: source, to: target, context: ctx
-            )
+            let translated: String
+            do {
+                translated = try await translator.translate(
+                    text, from: source, to: target, context: ctx
+                )
+            } catch {
+                await metrics?.recordTranslatorError()
+                throw error
+            }
+            let translatorMs = Date().timeIntervalSince(translatorStart)
+                * 1000
+            await metrics?.recordTranslatorLatency(ms: translatorMs)
             await context.appendTurn(
                 ConversationContext.Turn(
                     direction: direction,
@@ -216,9 +233,29 @@ public actor TranslationPipeline {
             )
             if let tts {
                 let sink = audioSink
-                try await tts.synthesize(translated, voice: voice) { data in
-                    Task { await sink.receive(data) }
+                let metrics = self.metrics
+                let firstChunkSeen = FirstChunkFlag()
+                do {
+                    try await tts.synthesize(
+                        translated, voice: voice
+                    ) { data in
+                        Task {
+                            if await firstChunkSeen.markAndCheckFirst() {
+                                let ms = Date()
+                                    .timeIntervalSince(startedAt) * 1000
+                                await metrics?
+                                    .recordEndToEndLatency(ms: ms)
+                            }
+                            await sink.receive(data)
+                        }
+                    }
+                } catch {
+                    await metrics?.recordTTSError()
+                    throw error
                 }
+            } else {
+                let ms = Date().timeIntervalSince(startedAt) * 1000
+                await metrics?.recordEndToEndLatency(ms: ms)
             }
         } catch {
             transcriptContinuation.yield(
@@ -228,5 +265,18 @@ public actor TranslationPipeline {
                 )
             )
         }
+    }
+}
+
+/// Single-shot flag used to make the TTS sink closure record end-to-end
+/// latency exactly once — when the first audio chunk arrives — rather than
+/// on every chunk.
+private actor FirstChunkFlag {
+    private var seen = false
+
+    func markAndCheckFirst() -> Bool {
+        if seen { return false }
+        seen = true
+        return true
     }
 }

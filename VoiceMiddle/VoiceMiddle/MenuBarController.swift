@@ -9,14 +9,17 @@ final class MenuBarController {
     private let statusItem: NSStatusItem
     private let controller: SessionController
     private let onToggleHUD: @MainActor () -> Void
+    private let onToggleDiagnostics: @MainActor () -> Void
     private var observerTask: Task<Void, Never>?
 
     init(
         controller: SessionController,
-        onToggleHUD: @escaping @MainActor () -> Void
+        onToggleHUD: @escaping @MainActor () -> Void,
+        onToggleDiagnostics: @escaping @MainActor () -> Void
     ) {
         self.controller = controller
         self.onToggleHUD = onToggleHUD
+        self.onToggleDiagnostics = onToggleDiagnostics
         self.statusItem = NSStatusBar.system.statusItem(
             withLength: NSStatusItem.variableLength
         )
@@ -69,6 +72,15 @@ final class MenuBarController {
         hudItem.target = self
         menu.addItem(hudItem)
 
+        let diagnosticsItem = NSMenuItem(
+            title: "Diagnostics",
+            action: #selector(toggleDiagnostics),
+            keyEquivalent: "d"
+        )
+        diagnosticsItem.keyEquivalentModifierMask = [.command, .option]
+        diagnosticsItem.target = self
+        menu.addItem(diagnosticsItem)
+
         menu.addItem(.separator())
 
         let preferencesItem = NSMenuItem(
@@ -116,6 +128,10 @@ final class MenuBarController {
 
     @objc private func toggleHUD() {
         onToggleHUD()
+    }
+
+    @objc private func toggleDiagnostics() {
+        onToggleDiagnostics()
     }
 
     @objc private func openPreferences() {

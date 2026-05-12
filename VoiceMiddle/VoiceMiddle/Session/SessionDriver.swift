@@ -31,19 +31,28 @@ final class SessionDriver: ObservableObject {
 
     @Published private(set) var state: State = .idle
     @Published private(set) var transcript: [TranscriptEvent] = []
+    @Published private(set) var recentErrors: [TranscriptEvent] = []
     @Published var availableProcesses: [AudioProcess] = []
+
+    private static let maxRecentErrors = 20
 
     private let settings: SettingsStore
     private let hudViewModel: HUDViewModel?
+    private let metrics: PipelineMetrics?
     private var pipeline: TranslationPipeline?
     private var capture: AppAudioCapture?
     private var outputEngine: OutputEngine?
     private var observer: Task<Void, Never>?
     private var transcriptWriter: TranscriptWriter?
 
-    init(settings: SettingsStore, hudViewModel: HUDViewModel? = nil) {
+    init(
+        settings: SettingsStore,
+        hudViewModel: HUDViewModel? = nil,
+        metrics: PipelineMetrics? = nil
+    ) {
         self.settings = settings
         self.hudViewModel = hudViewModel
+        self.metrics = metrics
         refreshProcesses()
     }
 
@@ -95,6 +104,17 @@ final class SessionDriver: ObservableObject {
                     self.transcript.append(event)
                     self.hudViewModel?.accept(event)
                     self.transcriptWriter?.append(event)
+                    if case .error = event {
+                        self.recentErrors.append(event)
+                        if self.recentErrors.count
+                            > Self.maxRecentErrors
+                        {
+                            self.recentErrors.removeFirst(
+                                self.recentErrors.count
+                                    - Self.maxRecentErrors
+                            )
+                        }
+                    }
                 }
             }
             await pipeline.start()
@@ -231,7 +251,8 @@ final class SessionDriver: ObservableObject {
             chunker: chunker,
             aggregator: aggregator,
             context: context,
-            audioSink: outputEngine
+            audioSink: outputEngine,
+            metrics: metrics
         )
     }
 }

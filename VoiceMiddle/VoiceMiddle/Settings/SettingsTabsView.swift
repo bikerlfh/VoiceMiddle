@@ -12,6 +12,7 @@ struct SettingsTabsView: View {
     let hudViewModel: HUDViewModel
     let installer: SystemExtensionInstaller
     let settings: SettingsStore
+    let sessionDriver: SessionDriver
 
     var body: some View {
         TabView {
@@ -26,8 +27,12 @@ struct SettingsTabsView: View {
                     Label("Translation", systemImage: "text.bubble")
                 }
 
-            AudioTab(hudViewModel: hudViewModel, settings: settings)
-                .tabItem { Label("Audio", systemImage: "waveform") }
+            AudioTab(
+                hudViewModel: hudViewModel,
+                settings: settings,
+                driver: sessionDriver
+            )
+            .tabItem { Label("Audio", systemImage: "waveform") }
 
             PrivacyTab(settings: settings)
                 .tabItem { Label("Privacy", systemImage: "lock") }

@@ -9,7 +9,8 @@ struct VoiceMiddleApp: App {
             SettingsTabsView(
                 hudViewModel: appDelegate.hudViewModel,
                 installer: appDelegate.systemExtensionInstaller,
-                settings: appDelegate.settings
+                settings: appDelegate.settings,
+                sessionDriver: appDelegate.sessionDriver
             )
         }
     }

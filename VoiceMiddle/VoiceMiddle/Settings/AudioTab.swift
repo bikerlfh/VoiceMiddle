@@ -12,7 +12,7 @@ import VMPipeline
 /// SwiftUI bindings remain ergonomic.
 struct AudioTab: View {
     let hudViewModel: HUDViewModel
-    @StateObject private var driver: SessionDriver
+    @ObservedObject var driver: SessionDriver
 
     @State private var inboundSensitivity: Float
     @State private var outboundSensitivity: Float
@@ -23,13 +23,14 @@ struct AudioTab: View {
 
     private let settings: SettingsStore
 
-    init(hudViewModel: HUDViewModel, settings: SettingsStore) {
+    init(
+        hudViewModel: HUDViewModel,
+        settings: SettingsStore,
+        driver: SessionDriver
+    ) {
         self.hudViewModel = hudViewModel
         self.settings = settings
-        _driver = StateObject(wrappedValue: SessionDriver(
-            settings: settings,
-            hudViewModel: hudViewModel
-        ))
+        self.driver = driver
         _inboundSensitivity = State(
             initialValue: settings.vadSensitivity(for: .inbound)
         )
