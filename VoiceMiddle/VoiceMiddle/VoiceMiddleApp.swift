@@ -6,7 +6,11 @@ struct VoiceMiddleApp: App {
 
     var body: some Scene {
         Settings {
-            InboundDemoView(hudViewModel: appDelegate.hudViewModel)
+            SettingsTabsView(
+                hudViewModel: appDelegate.hudViewModel,
+                installer: appDelegate.systemExtensionInstaller,
+                settings: appDelegate.settings
+            )
         }
     }
 }

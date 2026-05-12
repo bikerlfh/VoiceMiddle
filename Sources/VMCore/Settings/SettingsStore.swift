@@ -76,6 +76,73 @@ public final class SettingsStore: @unchecked Sendable {
         }
     }
 
+    // MARK: - General tab
+
+    /// Whether VoiceMiddle should launch automatically at user login.
+    /// The actual `SMAppService` registration is performed by the UI
+    /// layer (`GeneralTab`) when this value is toggled; this property
+    /// is the persisted source of truth.
+    public var launchAtLogin: Bool {
+        get { defaults.bool(forKey: Keys.launchAtLogin) }
+        set { defaults.set(newValue, forKey: Keys.launchAtLogin) }
+    }
+
+    /// Opacity of the transcript HUD window, clamped to `0.5...1.0` by
+    /// the UI. Defaults to `0.85`.
+    public var hudOpacity: Double {
+        get {
+            (defaults.object(forKey: Keys.hudOpacity) as? Double) ?? 0.85
+        }
+        set { defaults.set(newValue, forKey: Keys.hudOpacity) }
+    }
+
+    /// Persisted virtual key code for the user's custom session-toggle
+    /// global hotkey. `nil` means "use the built-in default if
+    /// Accessibility permission is granted". Stored as `NSNumber` so
+    /// `nil` round-trips through `UserDefaults`.
+    public var globalHotkeyKeyCode: UInt16? {
+        get {
+            let value = defaults.object(forKey: Keys.globalHotkeyKeyCode)
+            guard let number = value as? NSNumber else { return nil }
+            return number.uint16Value
+        }
+        set {
+            if let newValue {
+                defaults.set(
+                    NSNumber(value: newValue),
+                    forKey: Keys.globalHotkeyKeyCode
+                )
+            } else {
+                defaults.removeObject(forKey: Keys.globalHotkeyKeyCode)
+            }
+        }
+    }
+
+    /// Persisted modifier-flags bitmask for the user's custom
+    /// session-toggle global hotkey. Paired with
+    /// ``globalHotkeyKeyCode``.
+    public var globalHotkeyModifierFlags: UInt? {
+        get {
+            let value = defaults.object(
+                forKey: Keys.globalHotkeyModifierFlags
+            )
+            guard let number = value as? NSNumber else { return nil }
+            return number.uintValue
+        }
+        set {
+            if let newValue {
+                defaults.set(
+                    NSNumber(value: newValue),
+                    forKey: Keys.globalHotkeyModifierFlags
+                )
+            } else {
+                defaults.removeObject(
+                    forKey: Keys.globalHotkeyModifierFlags
+                )
+            }
+        }
+    }
+
     // MARK: - Keys
 
     private static func paceKey(for direction: Direction) -> String {
@@ -93,5 +160,9 @@ public final class SettingsStore: @unchecked Sendable {
         static let duckingLevelDB          = "vm.settings.duckingLevelDB"
         static let hasCompletedOnboarding  = "vm.settings.hasCompletedOnboarding"
         static let selectedTargetBundleID  = "vm.settings.selectedTargetBundleID"
+        static let launchAtLogin           = "vm.settings.launchAtLogin"
+        static let hudOpacity              = "vm.settings.hudOpacity"
+        static let globalHotkeyKeyCode     = "vm.settings.globalHotkeyKeyCode"
+        static let globalHotkeyModifierFlags = "vm.settings.globalHotkeyModifierFlags"
     }
 }

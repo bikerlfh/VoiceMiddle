@@ -80,4 +80,42 @@ struct SettingsStoreTests {
         let c = SettingsStore(defaults: defaults)
         #expect(c.selectedTargetBundleID == nil)
     }
+
+    @Test("launchAtLogin defaults to false and round-trips")
+    func launchAtLoginRoundTrip() {
+        let defaults = ephemeralDefaults()
+        let a = SettingsStore(defaults: defaults)
+        #expect(a.launchAtLogin == false)
+        a.launchAtLogin = true
+        let b = SettingsStore(defaults: defaults)
+        #expect(b.launchAtLogin == true)
+    }
+
+    @Test("hudOpacity defaults to 0.85 and round-trips")
+    func hudOpacityRoundTrip() {
+        let defaults = ephemeralDefaults()
+        let a = SettingsStore(defaults: defaults)
+        #expect(abs(a.hudOpacity - 0.85) < 0.001)
+        a.hudOpacity = 0.65
+        let b = SettingsStore(defaults: defaults)
+        #expect(abs(b.hudOpacity - 0.65) < 0.001)
+    }
+
+    @Test("Global hotkey persistence")
+    func hotkeyRoundTrip() {
+        let defaults = ephemeralDefaults()
+        let a = SettingsStore(defaults: defaults)
+        #expect(a.globalHotkeyKeyCode == nil)
+        #expect(a.globalHotkeyModifierFlags == nil)
+        a.globalHotkeyKeyCode = 9            // V
+        a.globalHotkeyModifierFlags = 1_572_864 // option + command (mock)
+        let b = SettingsStore(defaults: defaults)
+        #expect(b.globalHotkeyKeyCode == 9)
+        #expect(b.globalHotkeyModifierFlags == 1_572_864)
+        b.globalHotkeyKeyCode = nil
+        b.globalHotkeyModifierFlags = nil
+        let c = SettingsStore(defaults: defaults)
+        #expect(c.globalHotkeyKeyCode == nil)
+        #expect(c.globalHotkeyModifierFlags == nil)
+    }
 }
