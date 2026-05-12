@@ -83,12 +83,16 @@ final class MenuBarController {
 
         menu.addItem(.separator())
 
+        // Use the AppKit selector that the SwiftUI Settings scene installs
+        // on the responder chain. Setting target=nil routes the action up
+        // the chain so SwiftUI handles it natively without triggering its
+        // "Please use SettingsLink" warning.
         let preferencesItem = NSMenuItem(
             title: "Preferences…",
-            action: #selector(openPreferences),
+            action: Selector(("showSettingsWindow:")),
             keyEquivalent: ","
         )
-        preferencesItem.target = self
+        preferencesItem.target = nil
         menu.addItem(preferencesItem)
 
         menu.addItem(.separator())
@@ -132,16 +136,6 @@ final class MenuBarController {
 
     @objc private func toggleDiagnostics() {
         onToggleDiagnostics()
-    }
-
-    @objc private func openPreferences() {
-        // Preferences scene lands in Phase 4; for now this opens the default
-        // SwiftUI Settings scene wired in VoiceMiddleApp.
-        NSApp.sendAction(
-            Selector(("showSettingsWindow:")),
-            to: nil,
-            from: nil
-        )
     }
 
     @objc private func quit() {
