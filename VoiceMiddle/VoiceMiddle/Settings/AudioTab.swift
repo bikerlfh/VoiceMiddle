@@ -55,6 +55,7 @@ struct AudioTab: View {
 
     var body: some View {
         Form {
+            credentialsSection
             targetAppSection
             vadSection
             duckingSection
@@ -67,6 +68,57 @@ struct AudioTab: View {
     }
 
     // MARK: - Sections
+
+    private var credentialsSection: some View {
+        let env = ProcessInfo.processInfo.environment
+        let translatorID = settings.translatorIdentifier
+        let translatorLabel: String
+        let translatorPresent: Bool
+        switch translatorID {
+        case "claudeHaiku45":
+            translatorLabel = "Anthropic (ANTHROPIC_API_KEY)"
+            translatorPresent =
+                !(env["ANTHROPIC_API_KEY"] ?? "").isEmpty
+        case "gpt4oMini":
+            translatorLabel = "OpenAI (OPENAI_API_KEY)"
+            translatorPresent =
+                !(env["OPENAI_API_KEY"] ?? "").isEmpty
+        default:
+            translatorLabel = "DeepL (DEEPL_API_KEY)"
+            translatorPresent =
+                !(env["DEEPL_API_KEY"] ?? "").isEmpty
+        }
+        let elevenPresent =
+            !(env["ELEVENLABS_API_KEY"] ?? "").isEmpty
+        return Section("Credentials") {
+            HStack {
+                Text("ElevenLabs (ELEVENLABS_API_KEY):")
+                Spacer()
+                if elevenPresent {
+                    Text("\u{2713} loaded").foregroundStyle(.green)
+                } else {
+                    Text("\u{2717} not set").foregroundStyle(.orange)
+                }
+            }
+            HStack {
+                Text("\(translatorLabel):")
+                Spacer()
+                if translatorPresent {
+                    Text("\u{2713} loaded").foregroundStyle(.green)
+                } else {
+                    Text("\u{2717} not set").foregroundStyle(.orange)
+                }
+            }
+            Text(
+                "Keys are read from environment variables when the app "
+                + "launches. To change them, quit the app, export new "
+                + "values in a terminal, and relaunch the binary "
+                + "directly from that terminal."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+    }
 
     private var targetAppSection: some View {
         Section("Target app") {
