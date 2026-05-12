@@ -41,6 +41,9 @@ let package = Package(
             name: "VMTranslatorsTests",
             dependencies: ["VMTranslators", "VMCore"]
         ),
-        .testTarget(name: "VMPipelineTests", dependencies: ["VMPipeline"]),
+        .testTarget(
+            name: "VMPipelineTests",
+            dependencies: ["VMPipeline", "VMAudio"]
+        ),
     ]
 )
