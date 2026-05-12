@@ -234,6 +234,14 @@ public actor AppAudioCapture {
 
     /// `@convention(c)` IOProc that copies channel-0 Float32 samples into
     /// the ring buffer. Must not allocate.
+    ///
+    /// `AudioBufferList` is a flexible-array C struct. Swift bridges it as
+    /// `mNumberBuffers: UInt32` plus a single inline `mBuffers: AudioBuffer`
+    /// representing buffer 0; using the struct member access is the
+    /// alignment-safe way to reach it. Manually advancing by
+    /// `MemoryLayout<UInt32>.size` is wrong on 64-bit because
+    /// `AudioBuffer` contains an `UnsafeMutableRawPointer` that requires
+    /// 8-byte alignment, so the compiler pads to offset 8.
     private static let ioProc: AudioDeviceIOProc = {
         _, _, inInputData, _, _, _, clientData -> OSStatus in
         guard let opaque = clientData else { return noErr }
@@ -242,17 +250,7 @@ public actor AppAudioCapture {
             .takeUnretainedValue()
         let abl = inInputData.pointee
         guard abl.mNumberBuffers > 0 else { return noErr }
-        // The aggregate-over-process-tap delivers one AudioBuffer per
-        // tap channel; with a mono mixdown that's a single buffer at
-        // index 0. AudioBufferList's `mBuffers` is a flexible array
-        // member in C, so we step past the leading `mNumberBuffers`
-        // field to reach buffer 0.
-        let firstBufferPointer = UnsafeMutableRawPointer(
-            mutating: inInputData
-        )
-        .advanced(by: MemoryLayout<UInt32>.size)
-        .assumingMemoryBound(to: AudioBuffer.self)
-        let firstBuffer = firstBufferPointer.pointee
+        let firstBuffer = abl.mBuffers
         let frameCount = Int(firstBuffer.mDataByteSize)
             / MemoryLayout<Float>.size
         guard frameCount > 0,
