@@ -238,9 +238,7 @@ final class SessionDriver: ObservableObject {
         let voice = VoiceID(settings.voiceID)
 
         guard let bundleID = settings.selectedTargetBundleID,
-              let process = availableProcesses.first(
-                where: { $0.bundleID == bundleID }
-              )
+              !bundleID.isEmpty
         else {
             throw NSError(
                 domain: "VoiceMiddle.SessionDriver",
@@ -251,12 +249,34 @@ final class SessionDriver: ObservableObject {
             )
         }
 
+        // Apps like Chrome/Safari/Electron play audio from helper subprocess
+        // bundles whose IDs are the parent ID plus a `.helper` (or similar)
+        // suffix. We tap every process whose bundle ID equals, or is a
+        // dotted descendant of, the selection. That way the user picks
+        // "Google Chrome" once and we mix every Chrome process under it.
+        let matchingProcesses = availableProcesses.filter { proc in
+            guard let bid = proc.bundleID else { return false }
+            return bid == bundleID || bid.hasPrefix(bundleID + ".")
+        }
+        guard !matchingProcesses.isEmpty else {
+            throw NSError(
+                domain: "VoiceMiddle.SessionDriver",
+                code: -2,
+                userInfo: [
+                    NSLocalizedDescriptionKey:
+                        "Target app '\(bundleID)' is not visible to "
+                        + "Core Audio. Make sure it is running and "
+                        + "playing audio, then click Refresh.",
+                ]
+            )
+        }
+
         // 4 s @ 48 kHz mono of buffering between capture and chunker, so a
         // momentarily-stalled consumer doesn't immediately drop audio.
         let inboundBuffer = RingBuffer(capacity: 48_000 * 4)
         self.inboundBuffer = inboundBuffer
         let capture = AppAudioCapture(
-            process: process, buffer: inboundBuffer
+            processes: matchingProcesses, buffer: inboundBuffer
         )
         try await capture.start()
         self.capture = capture

@@ -45,7 +45,7 @@ public actor AppAudioCapture {
         case tapUIDUnavailable(status: OSStatus)
     }
 
-    public let process: AudioProcess
+    public let processes: [AudioProcess]
     public private(set) var isRunning: Bool = false
 
     private let buffer: RingBuffer
@@ -57,9 +57,21 @@ public actor AppAudioCapture {
     /// lifetime of the IOProc and release it in ``stop()``.
     private var bufferRetained: Unmanaged<RingBuffer>?
 
-    public init(process: AudioProcess, buffer: RingBuffer) {
-        self.process = process
+    /// Builds a tap that mixes audio from every process in ``processes``.
+    /// For multi-process apps (e.g. Chrome where audio actually flows
+    /// through a helper renderer rather than the main process), pass every
+    /// related Core Audio process so the tap doesn't silently capture from
+    /// a sibling that isn't producing audio.
+    public init(processes: [AudioProcess], buffer: RingBuffer) {
+        precondition(!processes.isEmpty,
+                     "AppAudioCapture requires at least one process")
+        self.processes = processes
         self.buffer = buffer
+    }
+
+    /// Convenience for the single-process case.
+    public init(process: AudioProcess, buffer: RingBuffer) {
+        self.init(processes: [process], buffer: buffer)
     }
 
     /// Begins capture. Creates the tap, aggregate device, and IOProc, then
@@ -68,16 +80,20 @@ public actor AppAudioCapture {
     public func start() throws {
         guard !isRunning else { return }
 
-        // 1. Build the tap description for this PID. We use
-        //    `initMonoMixdownOfProcesses` so the tap emits a single
-        //    Float32 channel, matching CanonicalAudioFormat.
+        // 1. Build the tap description for these PIDs. `monoMixdownOfProcesses`
+        //    mixes audio from every listed process into a single Float32
+        //    channel, matching CanonicalAudioFormat. Passing every related
+        //    helper process is how we capture Chrome / Safari / Electron-style
+        //    apps where audio comes from a renderer subprocess.
         let description = CATapDescription(
-            monoMixdownOfProcesses: [process.id]
+            monoMixdownOfProcesses: processes.map { $0.id }
         )
         description.muteBehavior = .unmuted
         description.isPrivate = true
         description.isExclusive = false
-        description.name = "VoiceMiddle tap \(process.pid)"
+        let displayName = processes.first?.name ?? "process"
+        description.name = "VoiceMiddle tap \(displayName) "
+            + "x\(processes.count)"
 
         // 2. Create the tap.
         var newTapID: AudioObjectID = .zero
@@ -106,7 +122,7 @@ public actor AppAudioCapture {
         let aggregateUID = "com.luismo.voicemiddle.aggregate.\(UUID().uuidString)"
         let composition: [String: Any] = [
             kAudioAggregateDeviceNameKey:
-                "VoiceMiddle Aggregate (\(process.name))",
+                "VoiceMiddle Aggregate (\(displayName))",
             kAudioAggregateDeviceUIDKey: aggregateUID,
             kAudioAggregateDeviceIsPrivateKey: 1,
             kAudioAggregateDeviceTapListKey: [
